@@ -1,0 +1,108 @@
+select  product_show.id AS id,
+        product_show.product_code AS product_code,
+        product_show.name_member AS name_member,
+        product_show.content_member AS content_member,
+        product_show.name_premium AS name_premium,
+        product_show.content_premium AS content_premium,
+        product_show.price_standard AS price_standard,
+        product_show.price_premium AS price_premium,
+        product_show.recommend AS recommend,
+        product_show.pre_order AS pre_order,
+        product_show.status AS status,
+        product_show.sex AS sex,
+        product_show.clip AS clip,
+        product_show.store_id AS store_id,
+        product_show.updatedAt AS updatedAt,
+        product_show.createdAt AS createdAt,
+        product_show.premium AS premium,
+        product_show.display AS display,
+        product_show.path_img AS path_img,
+        product_show.itemNum AS itemNum,
+        product_show.store_name AS store_name,
+        product_show.store_profile AS store_profile,
+        product_show.store_concept AS store_concept,
+        package_status.package_id AS package_id,
+        package_status.buy_limit AS buy_limit,
+        package_status.show_img_limit AS show_img_limit,
+        package_status.show_gift AS show_gift,
+        package_status.store_detail_limit AS store_detail_limit,
+        package_status.price_sell AS price_sell 
+from (
+    (select all_product.id AS id,
+        all_product.product_code AS product_code,
+        all_product.name_member AS name_member,
+        all_product.content_member AS content_member,
+        all_product.name_premium AS name_premium,
+        all_product.content_premium AS content_premium,
+        all_product.price_standard AS price_standard,
+        all_product.price_premium AS price_premium,
+        all_product.recommend AS recommend,
+        all_product.pre_order AS pre_order,
+        all_product.status AS status,
+        all_product.sex AS sex,
+        all_product.clip AS clip,
+        all_product.store_id AS store_id,
+        all_product.updatedAt AS updatedAt,
+        all_product.createdAt AS createdAt,
+        all_product.premium AS premium,
+        all_product.display AS display,
+        all_product.path_img AS path_img,
+        all_product.itemNum AS itemNum,
+        store.name AS store_name,
+        store.profile_img AS store_profile,
+        store.concept AS store_concept 
+    from (store join (
+            select product.id AS id,
+                product.product_code AS product_code,
+                product.name_member AS name_member,
+                product.content_member AS content_member,
+                product.name_premium AS name_premium,
+                product.content_premium AS content_premium,
+                product.price_standard AS price_standard,
+                product.price_premium AS price_premium,
+                product.recommend AS recommend,
+                product.pre_order AS pre_order,
+                product.status AS status,
+                product.sex AS sex,
+                product.clip AS clip,
+                product.store_id AS store_id,
+                product.updatedAt AS updatedAt,
+                product.createdAt AS createdAt,
+                product.premium AS premium,
+                product.display AS display,
+                product.path_img AS path_img,
+                product.itemNum AS itemNum 
+            from (
+                select product.id AS id,
+                    product.product_code AS product_code,
+                    product.name_member AS name_member,
+                    product.content_member AS content_member,
+                    product.name_premium AS name_premium,
+                    product.content_premium AS content_premium,
+                    product.price_standard AS price_standard,
+                    product.price_premium AS price_premium,
+                    product.recommend AS recommend,
+                    product.pre_order AS pre_order,
+                    product.status AS status,
+                    product.sex AS sex,
+                    product.clip AS clip,
+                    product.store_id AS store_id,
+                    product.updatedAt AS updatedAt,
+                    product.createdAt AS createdAt,
+                    product_image.premium AS premium,
+                    product_image.display AS display,
+                    product_image.path_img AS path_img,
+                    row_number() over ( partition by product.id order by product_image.premium desc) AS itemNum 
+                from (product 
+                    join product_image 
+                        on(product.id = product_image.product_id)
+                    ) 
+                    order by row_number() over ( partition by product.id order by product_image.premium desc)
+            ) product order by product.id
+    ) all_product 
+    on (
+        store.id = all_product.store_id 
+        and all_product.status = 'active')
+    )
+) product_show join package_status) 
+where product_show.itemNum <= package_status.show_img_limit
