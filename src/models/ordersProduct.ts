@@ -28,14 +28,6 @@ export const OrdersProduct = sequelize.define('OrdersProduct',
         type: DataTypes.INTEGER,
         allowNull: false,
     },
-    incart: {
-        type: DataTypes.STRING(10),
-        allowNull: false,
-    },
-    member_id: {
-        type: DataTypes.STRING(10),
-        allowNull: false,
-    },
 }, {
     sequelize,
     tableName: 'orders_product',

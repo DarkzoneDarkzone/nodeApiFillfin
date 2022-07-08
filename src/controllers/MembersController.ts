@@ -50,6 +50,7 @@ export class MembersController extends ViewService {
             /* generate new access_token */
             const access_token = jwt.sign({
                 member_id: finding.id,
+                section: 'member',
                 username: finding.username,
                 gender: finding.gender,
                 at: new Date().getTime()
@@ -64,7 +65,8 @@ export class MembersController extends ViewService {
                     access_token: finding.access_token,
                     refresh_token: finding.refresh_token,
                     member_code: finding.member_code,
-                    gender: finding.gender
+                    gender: finding.gender,
+                    userName: finding.username
                 }
             })
         } catch(error){

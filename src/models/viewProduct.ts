@@ -60,10 +60,6 @@ export const ViewProduct = sequelize.define('view_product',
         type: DataTypes.INTEGER,
         allowNull: false
     },
-    premium: {
-        type: DataTypes.STRING(255),
-        allowNull: false
-    },
     path_img: {
         type: DataTypes.STRING(255),
         allowNull: false
@@ -107,6 +103,10 @@ export const ViewProduct = sequelize.define('view_product',
     },
     price_sell: {
         type: DataTypes.INTEGER,
+        allowNull: false
+    },
+    status_premium: {
+        type: DataTypes.STRING(10),
         allowNull: false
     },
 },

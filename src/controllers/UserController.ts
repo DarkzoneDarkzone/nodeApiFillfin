@@ -1,3 +1,4 @@
+import { OrdersProduct } from './../models/ordersProduct';
 import { Op } from 'sequelize'
 import * as Config from '../util/config'
 import 'moment/locale/th'
@@ -61,7 +62,9 @@ export class UserController {
                 .toFile( path.resolve(req.file.destination, originalname+ext))
                 .then((data: any) => {
                     fs.unlink( req.file.path, (err) => {
-                        console.log(err)
+                        if(err){
+                            console.log(err)
+                        }
                     })
                     return upload+originalname+ext
                 })
@@ -115,6 +118,7 @@ export class UserController {
             /* generate access_token for user */
             const access_token = jwt.sign({
                 user_id: finding.id,
+                section: 'admin',
                 usercode: finding.users_code,
                 username: req.body.username,
                 psermission: finding.permission,
@@ -155,12 +159,12 @@ export class UserController {
                 errorMessage: errors.array()
             })
         }
-        const finding = await User.findOne({where:{users_code: req.body.userCode}})
+        const finding = await User.findOne({where:{users_code: req.body.adminCode}})
         if(!finding){
             return res.status(400).json({
                 status: false,
                 message: 'error',
-                description: ''
+                description: 'admin was not found.'
             })
         }
         try {
@@ -213,6 +217,33 @@ export class UserController {
                 message: 'error',
                 description: 'something went wrong.'
             })
+        }
+    }
+    OnUploadVideoStore = async(req: any, res: any) => {
+        if(req.file){
+            let dest = req.file.destination.split("uploads")
+            var ext = path.extname(req.file.originalname)
+            let originalname = path.basename(req.file.originalname, ext)
+            const newfolder = `${dest[0]}video${dest[1]}`
+            if(!fs.existsSync(newfolder)){
+                fs.mkdirSync(newfolder, { recursive: true })
+            } 
+            for(let i = 1; fs.existsSync(newfolder+originalname+ext); i++){
+                originalname = originalname.split('(')[0]
+                originalname += '('+i+')'
+            }
+            const path_upload = "video"+dest[1]+originalname+ext
+            fs.copyFile(req.file.path, dest[0]+path_upload, (err) => {
+                if(err){
+                    console.log(err)
+                }
+            })
+            fs.unlink( req.file.path, (err) => {
+                if(err){
+                    console.log(err)
+                }
+            })
+            return res.json({name: path_upload})
         }
     }
 }

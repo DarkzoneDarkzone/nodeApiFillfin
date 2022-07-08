@@ -26,6 +26,13 @@ export const AuthenticateStore = async (req: any, res: any, next: any) => {
                     description: 'token was expired.'
                 })
             }
+            if(decodedToken.section != "store"){
+                return res.status(401).json({
+                    status: false,
+                    message: 'error',
+                    description: 'not have permission.'
+                })
+            }
             /* data keep for use when update data in database */
             req.authStore = decodedToken;
             next()

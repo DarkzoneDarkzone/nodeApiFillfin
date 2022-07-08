@@ -71,7 +71,9 @@ export class StoreController extends ViewService{
                 .toFile( path.resolve(req.file.destination, originalname+ext))
                 .then((data: any) => {
                     fs.unlink( req.file.path, (err) => {
-                        console.log(err)
+                        if(err){
+                            console.log(err)
+                        }
                     })
                     return upload+originalname+ext
                 })
@@ -146,6 +148,8 @@ export class StoreController extends ViewService{
         try {
             /* generate access_token for user */
             const access_token = jwt.sign({
+                store_id: finding.id,
+                section: 'store',
                 store_code: finding.store_code,
                 username: finding.username,
                 gender: finding.gender,
@@ -159,7 +163,8 @@ export class StoreController extends ViewService{
                 description: 'login success.',
                 data: {
                     access_token: access_token,
-                    refresh_token: finding.refresh_token
+                    refresh_token: finding.refresh_token,
+                    storeName: finding.name
                 }
             })
         } catch(error){
@@ -204,7 +209,9 @@ export class StoreController extends ViewService{
                 .toFile( path.resolve(req.file.destination, originalname+ext))
                 .then((data: any) => {
                     fs.unlink( req.file.path, (err) => {
-                        console.log(err)
+                        if(err){
+                            console.log(err)
+                        }
                     })
                     return upload+originalname+ext
                 })
@@ -251,13 +258,21 @@ export class StoreController extends ViewService{
                 status: 'active'
             },
             attributes: ['product_code', 'name_member', 'content_member', 'name_premium', 'content_premium', 'price_standard', 'price_premium', 'recommend', 'pre_order',
-                        'status', 'sex', 'clip', 'store_id', 'premium', 'path_img', 'package_id', 'buy_limit', 'show_gift', 'price_sell',
+                        'status', 'sex', 'clip', 'store_id', 'path_img', 'package_id', 'buy_limit', 'show_gift', 'price_sell', 'createdAt',
                 [sequelize.fn('GROUP_CONCAT', sequelize.col('path_img')), 'product_img']
             ],
-            group: ['store_id', 'id']
+            group: ['store_id', 'id'],
+            order: [
+                ['createdAt', 'DESC']
+            ]
         })
-        const review = await Review.findAll({where:{store_id: store.id}})
-        const store_post = await this.view_store_post(store.id)
+        const review = await Review.findAll({
+            where:{store_id: store.id},
+            order: [
+                ['createdAt', 'DESC']
+            ]
+        })
+        const store_post = await this.query_store_post(store.id)
         let arr_product: any[] = []
         let arr_product_pre: any[] = []
         product.forEach((data: any) => {
@@ -279,7 +294,6 @@ export class StoreController extends ViewService{
                 arr_product_pre.push(arr_data)
             }
         })
-        
         return res.status(200).json({
             status: true,
             message: 'ok',
@@ -292,5 +306,32 @@ export class StoreController extends ViewService{
                 review: review
             }
         })
+    }
+    OnUpdateConcept = async(req: any, res: any) => {
+        const errors = validationResult(req)
+        if(!errors.isEmpty()){
+            return res.status(400).json({
+                status: false,
+                message: 'error',
+                errorMessage: errors.array()
+            })
+        }
+        const store = req.authStore
+        try {
+            const finding = await Store.findOne({where:{store_code: store.store_code}})
+            finding.concept = req.body.concept
+            finding.save()
+            return res.status(200).json({
+                status: true,
+                message: 'ok',
+                description: 'concept was updated.'
+            })
+        } catch(error){
+            return res.status(500).json({
+                status: false,
+                message: 'error',
+                description: 'something went wrong.'
+            })
+        }
     }
 }

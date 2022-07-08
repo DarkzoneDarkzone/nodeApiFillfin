@@ -126,7 +126,9 @@ export class PackageController extends PackageService {
                 .toFile( path.resolve(req.file.destination, originalname+ext))
                 .then((data: any) => {
                     fs.unlink( req.file.path, (err) => {
-                        console.log(err)
+                        if(err){
+                            console.log(err)
+                        }
                     })
                     return upload+originalname+ext
                 })
@@ -216,8 +218,6 @@ export class PackageController extends PackageService {
         })
     }
     OnConfirmPayment = async(req: any, res: any) => {
-        return false
-        // const admin
         const errors = validationResult(req)
         if(!errors.isEmpty()){
             return res.status(400).json({
@@ -226,14 +226,22 @@ export class PackageController extends PackageService {
                 errorMessage: errors.array()
             })
         }
-        const payment = await PackagePayment.findOne({where:{package_order_id: req.params.payment_id}})
-        const order = await PackageOrder.findOne({where:{package_order_id: req.params.payment_id}})
+        const admin = req.authAdmin
+        if(!admin){
+            return res.status(401).json({
+                status: false,
+                message: 'error',
+                description: 'not authenticated.'
+            })
+        }
+        const payment = await PackagePayment.findOne({where:{package_order_id: req.params.paymentId}})
+        const order = await PackageOrder.findOne({where:{package_order_id: req.params.paymentId}})
         const package_select = await Package.findOne({where:{package_id: order.package_id}})
         const begin = moment().format('YYYY-MM-DD HH:mm:ss')
         const expire = moment(begin).add(package_select.day, 'days').format('YYYY-MM-DD HH:mm:ss')
         try {
             payment.status_confirm = "confirm"
-            // payment.user_confirm = ** admin id **
+            payment.user_confirm = admin.user_id
             payment.save()
             order.begin = begin
             order.expire = expire
@@ -250,6 +258,75 @@ export class PackageController extends PackageService {
             return res.status(500).json({
                 status: false,
                 message:' error',
+                description: 'something went wrong.'
+            })
+        }
+    }
+    OnGetMemberPackageOrder = async(req: any, res: any) => {
+        const finding = await this.query_package_order()
+        return res.status(200).json({
+            status: true,
+            message: 'ok',
+            description: 'get data success.',
+            order: finding
+        })
+    }
+    OnUpdatePackage = async(req: any, res: any) => {
+        const errors = validationResult(req)
+        if(!errors.isEmpty()){
+            return res.status(400).json({
+                status: false,
+                message: 'error',
+                errorMessage: errors.array()
+            })
+        }
+        const package_result = await Package.findOne({where:{pack_id: req.body.package_id}})
+        if(!package_result){
+            return res.status(404).json({
+                status: false,
+                message: 'error',
+                description: 'package was not found.'
+            })
+        }
+        try {
+            if(req.file){
+                let upload = "/uploads"+req.file.destination.split("uploads").pop()
+                let dest = req.file.destination
+                var ext = path.extname(req.file.originalname);
+                let originalname = path.basename(req.file.originalname, ext)
+                for(let i = 1; fs.existsSync(dest+originalname+ext); i++){
+                    originalname = originalname.split('(')[0]
+                    originalname += '('+i+')'
+                }
+                const image = await sharp(req.file.path)
+                .resize(200, 200)
+                .withMetadata()
+                .jpeg({ quality: 95})
+                .toFile( path.resolve(req.file.destination, originalname+ext))
+                .then((data: any) => {
+                    fs.unlink( req.file.path, (err) => {
+                        if(err){
+                            console.log(err)
+                        }
+                    })
+                    return upload+originalname+ext
+                })
+                package_result.image = image
+            }
+            package_result.day = req.body.day
+            package_result.content = req.body.content
+            package_result.price = req.body.price
+            package_result.gross_profit = req.body.grossProfit
+            package_result.save()
+            return res.status(200).json({
+                status: true,
+                message: 'ok',
+                description: 'package was updated.'
+            })
+        } catch(error) {
+            return res.status(500).json({
+                status: false,
+                message: 'error',
                 description: 'something went wrong.'
             })
         }

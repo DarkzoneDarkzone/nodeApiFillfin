@@ -48,6 +48,10 @@ export const Package = sequelize.define('Package',
         type: DataTypes.INTEGER,
         allowNull: false,
     },
+    premium: {
+        type: DataTypes.STRING(255),
+        allowNull: false,
+    },
     priority: {
         type: DataTypes.INTEGER,
         allowNull: false,

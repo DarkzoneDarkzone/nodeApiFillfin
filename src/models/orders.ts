@@ -20,24 +20,16 @@ export const Orders = sequelize.define('Orders',
         type: DataTypes.STRING(20),
         allowNull: false,
     },
-    totalPrice: {
+    totalprice: {
         type: DataTypes.INTEGER,
         allowNull: false,
     },
-    netPrice: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-    },
-    store_id: {
+    netprice: {
         type: DataTypes.INTEGER,
         allowNull: false,
     },
     member_id: {
         type: DataTypes.INTEGER,
-        allowNull: false,
-    },
-    note: {
-        type: DataTypes.TEXT,
         allowNull: false,
     },
 }, {

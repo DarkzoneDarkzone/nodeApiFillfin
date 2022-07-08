@@ -16,7 +16,7 @@ export const Review = sequelize.define('Review',
         type: DataTypes.TEXT,
         allowNull: false,
     },
-    order_id: {
+    order_number: {
         type: DataTypes.INTEGER,
         allowNull: false,
     },

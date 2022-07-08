@@ -33,6 +33,14 @@ export class PostController extends ViewService{
             })
         }
         const store = await Store.findOne({where:{store_code: storeToken.store_code}})
+        const all_post = await Post.findAll({where:{store_id: store.id, status: 'active'}})
+        if(all_post.length > 10){
+            return res.status(400).json({
+                status: false,
+                message: 'error',
+                description: 'your post has limited.'
+            })
+        }
         const t = await sequelize.transaction()
         try {
             const str_post_code = `${store.code}${moment().format('YYYYMMDDHHmmss')}`
@@ -63,7 +71,9 @@ export class PostController extends ViewService{
                     .toFile( path.resolve(file.destination, originalname+ext))
                     .then((data: any) => {
                         fs.unlink( file.path, (err) => {
-                            console.log(err)
+                            if(err){
+                                console.log(err)
+                            }
                         })
                         return upload+originalname+ext
                     })
@@ -85,6 +95,31 @@ export class PostController extends ViewService{
         } catch(error){
             console.log(error)
             await t.rollback()
+            return res.status(500).json({
+                status: false,
+                message: 'error',
+                description: 'something went wrong.'
+            })
+        }
+    }
+    OnDeletePost = async(req: any, res: any) => {
+        const post = await Post.findOne({where:{post_code: req.params.code, status: 'active'}})
+        if(!post){
+            return res.status(404).json({
+                status: false,
+                message: 'error',
+                description: 'post was not found.'
+            })
+        }
+        try {
+            post.destroy()
+            const post_image = PostImage.destroy({where:{post_id: post.id}})
+            return res.status(200).json({
+                status: true,
+                message: 'ok',
+                description: 'post was deleted.'
+            })
+        } catch(error){
             return res.status(500).json({
                 status: false,
                 message: 'error',

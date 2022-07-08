@@ -12,7 +12,7 @@ export const PackageStatus = sequelize.define('PackageStatus',
         type: DataTypes.STRING(255),
         allowNull: false
     },
-    but_limit: {
+    buy_limit: {
         type: DataTypes.STRING(10),
         allowNull: false
     },
