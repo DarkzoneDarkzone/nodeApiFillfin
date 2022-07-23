@@ -4,7 +4,6 @@ import { ViewProduct } from './../models/viewProduct';
 import { Members } from './../models/members';
 import { sequelize } from './../util/database';
 import { Store } from './../models/store';
-import { HostNotFoundError, Op } from 'sequelize'
 import * as Config from '../util/config'
 import 'moment/locale/th'
 import moment from 'moment'
@@ -12,10 +11,8 @@ import bcrypt from 'bcrypt'
 import fs from 'fs'
 const sharp = require('sharp')
 import path from 'path'
-import * as multerUpload from '../util/multerUpload'
 import { validationResult } from 'express-validator'
 import * as jwt from 'jsonwebtoken'
-import { json } from 'body-parser';
 
 export class StoreController extends ViewService{
     OnRegister = async(req: any, res: any) => {
@@ -28,7 +25,8 @@ export class StoreController extends ViewService{
             })
         }
         const finding = await Store.findOne({where:{username: req.body.username}})
-        if(finding){
+        const finding_member = await Members.findOne({where:{username: req.body.username}})
+        if(finding || finding_member){
             return res.status(400).json({
                 status: false,
                 message: 'error',
@@ -164,7 +162,8 @@ export class StoreController extends ViewService{
                 data: {
                     access_token: access_token,
                     refresh_token: finding.refresh_token,
-                    storeName: finding.name
+                    storeName: finding.name,
+                    storeCode: finding.store_code
                 }
             })
         } catch(error){
@@ -184,7 +183,7 @@ export class StoreController extends ViewService{
                 errorMessage: errors.array()
             })
         }
-        const finding = await Store.findOne({where:{store_code: req.params.store_code}})
+        const finding = await Store.findOne({where:{store_code: req.body.storeCode}})
         if(!finding){
             return res.status(404).json({
                 status: false,

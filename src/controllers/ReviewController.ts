@@ -1,7 +1,4 @@
 import { Review } from './../models/review';
-import { sequelize } from './../util/database';
-import { Op } from 'sequelize'
-import * as Config from '../util/config'
 import 'moment/locale/th'
 import moment from 'moment'
 import { validationResult } from 'express-validator'

@@ -9,7 +9,6 @@ import { MembersController } from '../controllers/MembersController'
 import { Router } from 'express'
 import { check } from 'express-validator'
 import * as multerUpload from '../util/multerUpload'
-
 const upload = multerUpload.uploadImage()
 const router = Router()
 const membersController = new MembersController()
@@ -18,6 +17,7 @@ const packageController = new PackageController()
 const productController = new ProductController()
 const bankController = new BankController()
 const cartController = new CartController()
+
 /** for authenticate */
 router.post('/api/member/signin',[check('username').notEmpty().isString(), check('password').notEmpty().isString(),], membersController.OnSignin)
 router.post('/api/member/update', AuthenticateMember, [
@@ -27,23 +27,27 @@ router.post('/api/member/register', [
     check('username').notEmpty().isString(),
     check('password').notEmpty().isString(),
     check('gender').notEmpty().isString(),
-    check('package_id').notEmpty().isString(),
 ], membersController.OnCreate)
 router.post('/api/member/checkToken', membersController.OnCheckAccessToken)
 router.post('/api/member/getToken', membersController.OnGetAccessToken)
 /** for package */
 router.get('/api/package/get', packageController.OnGetPackageAll)
-router.get('/api/package/getBill/:member_code', packageController.OnGetPackageOrder)
 router.get('/api/package/statusPayment/:member_code', packageController.OnCheckStatusPayment)
-router.post('/api/package/createOrder', [
-    check('member_id').notEmpty(),
-    check('gender').notEmpty().isString(),
-    check('package_id').notEmpty(),
-], packageController.OnCreatePackageOrder)
+router.post('/api/package/getSelect', [
+    check('memberCode').isString().notEmpty(),
+    check('packageId').notEmpty(),
+], packageController.OnGetPackage)
+router.get('/api/package/checkPackage/:code', packageController.OnCheckPackageMember)
 router.post('/api/package/createPayment', upload.single('slip'), [
-    check('member_code').notEmpty(),
-    check('bank_ref').notEmpty(),
+    check('memberCode').notEmpty().isString(),
+    check('bankRef').notEmpty(),
+    check('packageId').notEmpty(),
 ], packageController.OnCreatePayment)
+router.post('/api/package/renewal', upload.single('slip'), AuthenticateMember, [
+    check('memberCode').notEmpty().isString(),
+    check('packageId').notEmpty().isString(),
+    check('bankRef').notEmpty(),
+], packageController.OnRenewalPackage)
 /** for show product */
 router.get('/api/product/:code', AuthenticateMemberAndGuest, productController.OnGetProductByCode)
 router.get('/api/product/:gender/store/:store_code', AuthenticateMemberAndGuest, productController.OnGetProduct)
@@ -68,7 +72,8 @@ router.post('/api/member/createOrder', upload.single('image'), [
 ], AuthenticateMember, orderController.OnCreateOrder)
 router.post('/api/member/order/review', AuthenticateMember, [
     check('message').isString().notEmpty(),
-    check('order_number').isString().notEmpty(),
+    check('orderNumber').isString().notEmpty(),
+    check('productId').isNumeric().notEmpty(),
     check('star').isNumeric().notEmpty(),
 ], orderController.OnReview)
 router.get('/api/member/getOrder', AuthenticateMember, orderController.OnGetOrderMember)

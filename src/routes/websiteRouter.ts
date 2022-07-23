@@ -1,3 +1,4 @@
+import { ContentController } from './../controllers/ContentController';
 import { BannerController } from './../controllers/BannerController';
 import { Router } from 'express'
 import { check } from 'express-validator'
@@ -9,27 +10,26 @@ const upload = multerUpload.uploadImage()
 const router = Router()
 const adsController = new AdsController()
 const bannerController = new BannerController()
+const contentController = new ContentController()
 
 router.get('/api/website/getAds/:page', adsController.OnGetAds)
 router.post('/api/website/getBanner', [
     check('page').isString().notEmpty(),
     check('gender').isString().notEmpty()
 ], bannerController.OnGetBanner)
-
 router.post('/api/website/createAds', upload.single('image'), [
     check('position').isString(),
     check('priority').isString(),
 ], AuthenticateAdmin, adsController.OnCreateAds)
-
 router.post('/api/website/updateAds', upload.single('image'), [
     check('position').isString(),
     check('priority').isString(),
 ], AuthenticateAdmin, adsController.OnUpdateAds)
-
 router.post('/api/website/updateBanner', upload.single('image'), [
     check('title').isString(),
     check('display').isString(),
     check('content').isString(),
 ], AuthenticateAdmin, bannerController.OnUpdateBanner)
+router.get('/api/website/content/:type', contentController.OnGetContent)
 
 export const websiteRouter = router

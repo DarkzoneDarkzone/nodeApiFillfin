@@ -15,12 +15,11 @@ import { ViewProduct } from '../models/viewProduct';
 import fs from 'fs'
 const sharp = require('sharp')
 import path from 'path'
-import * as multerUpload from '../util/multerUpload'
 
 export class ProductController extends ViewService {
     OnGetStoreAll = async(req: any, res: any) => {
         const page: number = parseInt(req.query.page) || 1
-        const store_name = req.query.name || ""
+        const store_name = req.query.search || ""
         const limit: number = 15
         const offset: number = (page*limit)-limit
         const member = req.authMember
@@ -36,7 +35,7 @@ export class ProductController extends ViewService {
                 package_member = member_package.package_id
             }
         }
-        const product_store: any = await ViewProductAllStore.findAndCountAll({where:{sex: gender,store_name:{[Op.substring]:store_name,}},offset: offset,limit: limit})
+        const product_store: any = await ViewProductAllStore.findAndCountAll({where:{sex: gender,store_name:{[Op.substring]:store_name}},offset: offset,limit: limit})
         const product_recom: any = await this.query_product_recommend(package_member, gender)
         const filter_product_store = product_store.rows.map((data: any) => {
             return {
@@ -48,10 +47,11 @@ export class ProductController extends ViewService {
                 store_name: data.store_name,
                 sex: data.sex,
                 canbuy: canbuy,
+                preOrder: (data.pre_order=='yes')?true:false,
                 show_gift: data.show_gift,
                 store_profile: data.store_profile,
                 store_concept: data.store_concept,
-                product_img: data.product_img,
+                product_img: (data.pre_order=='yes')?data.store_profile:data.product_img,
             }
         })
         const filter_product_recom = product_recom.map((data: any) => {
@@ -129,7 +129,14 @@ export class ProductController extends ViewService {
             group: ['store_id', 'id']
         })
         const preorder: any = await this.query_product_preorder(package_member, gender, store.id)
-        const review = await Review.findAll({where:{store_id: store.id}})
+        const review: any = await this.queryReviewForMember(store.id)
+        const review_res = review.map((data: any) => {
+            return {
+                memberName: data.username,
+                message: data.message,
+                star: data.star
+            }
+        })
         const store_post = await this.query_store_post(store.id)
         const filter_product = product.rows.map((data: any) => {
             return {
@@ -173,7 +180,7 @@ export class ProductController extends ViewService {
                 all_product: filter_product,
                 pre_order: filter_pre,
                 store_post: store_post,
-                review: review
+                review: review_res
             }
         })
     }
@@ -245,14 +252,13 @@ export class ProductController extends ViewService {
             })
         }
         const store = req.authStore
-        if(!store){
-            return res.status(401).json({
-                status: false,
-                message: 'error',
-                description: 'not authenticated.'
-            })
-        }
         const store_profile = await Store.findOne({where:{store_code: store.store_code}})
+        const prod_most_prior = await Product.findOne({
+            where:{store_id: store_profile.id},
+            order: [
+                ['priority', 'DESC']
+            ]
+        })
         const product_str = store_profile.id + Math.random().toString().substr(2, 10)+moment().unix();
         const product_code = await bcrypt.hash(product_str, 10);
         const t = await sequelize.transaction()
@@ -270,7 +276,8 @@ export class ProductController extends ViewService {
                 status: 'active',
                 sex: store.gender,
                 clip: req.body.clip,
-                store_id: store_profile.id
+                store_id: store_profile.id,
+                priority: (prod_most_prior)?prod_most_prior.priority+1:0
             }, { transaction: t })
             let productImage: any[] = []
             if(req.files){
@@ -334,14 +341,13 @@ export class ProductController extends ViewService {
             })
         }
         const store = req.authStore
-        if(!store){
-            return res.status(401).json({
-                status: false,
-                message: 'error',
-                description: 'not authenticated.'
-            })
-        }
         const store_profile = await Store.findOne({where:{store_code: store.store_code}})
+        const prod_most_prior = await Product.findOne({
+            where:{store_id: store_profile.id},
+            order: [
+                ['priority', 'DESC']
+            ]
+        })
         const product_str = store_profile.id + Math.random().toString().substr(2, 10)+moment().unix()
         const product_code = await bcrypt.hash(product_str, 10)
         const t = await sequelize.transaction()
@@ -359,7 +365,8 @@ export class ProductController extends ViewService {
                 status: 'active',
                 sex: store.gender,
                 clip: req.body.clip,
-                store_id: store_profile.id
+                store_id: store_profile.id,
+                priority: (prod_most_prior)?prod_most_prior.priority+1:0
             }, { transaction: t })
             let productImage: any[] = []
             if(req.files){

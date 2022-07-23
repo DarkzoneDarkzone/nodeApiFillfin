@@ -3,15 +3,12 @@ import { PostImage } from './../models/postImage';
 import { Store } from './../models/store';
 import { Post } from './../models/post';
 import { ViewService } from './../services/View.service';
-import { Op } from 'sequelize'
-import * as Config from '../util/config'
 import 'moment/locale/th'
 import moment from 'moment'
 import { validationResult } from 'express-validator'
 import fs from 'fs'
 const sharp = require('sharp')
 import path from 'path'
-import * as multerUpload from '../util/multerUpload'
 import bcrypt from 'bcrypt'
 
 export class PostController extends ViewService{

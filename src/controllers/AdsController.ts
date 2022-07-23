@@ -1,7 +1,5 @@
-import { Ads } from './../models/ads';
-import { sequelize } from './../util/database';
+import { Ads } from './../models/ads'
 import { Op } from 'sequelize'
-import * as Config from '../util/config'
 import 'moment/locale/th'
 import moment from 'moment'
 import { validationResult } from 'express-validator'
@@ -52,7 +50,7 @@ export class AdsController {
             if(req.file){
                 let upload = "/uploads"+req.file.destination.split("uploads").pop()
                 let dest = req.file.destination
-                var ext = path.extname(req.file.originalname);
+                var ext = path.extname(req.file.originalname)
                 let originalname = path.basename(req.file.originalname, ext)
                 for(let i = 1; fs.existsSync(dest+originalname+ext); i++){
                     originalname = originalname.split('(')[0]

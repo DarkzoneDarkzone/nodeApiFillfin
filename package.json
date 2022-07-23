@@ -30,6 +30,7 @@
     "mysql2": "^2.3.3",
     "sequelize": "^6.16.1",
     "sharp": "^0.30.6",
+    "socket.io": "^4.5.1",
     "swagger-ui-express": "^4.4.0",
     "ts-md5": "^1.2.11"
   },

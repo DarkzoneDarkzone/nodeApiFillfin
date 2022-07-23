@@ -28,6 +28,10 @@ export const OrdersProduct = sequelize.define('OrdersProduct',
         type: DataTypes.INTEGER,
         allowNull: false,
     },
+    status: {
+        type: DataTypes.STRING(10),
+        allowNull: false,
+    },
 }, {
     sequelize,
     tableName: 'orders_product',

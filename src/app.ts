@@ -13,10 +13,12 @@ import { memberRouter } from './routes/memberRouter'
 // SyncModels.OnInit()
 
 const app: Application = express()
+app.use(express.static(path.join(__dirname, './../dist/public/')))
 
 /*  -------- converting json -------- */  
 app.use(express.urlencoded({extended: true}))
-app.use(express.json()) 
+app.use(express.json())
+
 /* Middleware */
 app.use((req,res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*' )
@@ -24,16 +26,17 @@ app.use((req,res, next) => {
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
     next()
 })
+
 /** router */
 app.use(memberRouter)
 app.use(adminRouter)
 app.use(storeRouter)
 app.use(websiteRouter)
 app.use(videoRouter)
-app.use(express.static(path.join(__dirname, './../dist/public/')))
+
 
 /* Socket Start */
-// const server = app.listen(socketPort)
-// const io = SIO.init(server)
+const server = app.listen(socketPort)
+const io = SIO.init(server)
 
 app.listen(serverPort)

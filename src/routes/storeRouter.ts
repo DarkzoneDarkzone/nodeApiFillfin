@@ -1,3 +1,4 @@
+import { OrderController } from './../controllers/OrderController';
 import { ProductController } from './../controllers/ProductController';
 import { StoreController } from './../controllers/StoreController';
 import { PostController } from './../controllers/PostController'
@@ -11,6 +12,7 @@ const router = Router()
 const storeController = new StoreController()
 const postController = new PostController()
 const productController = new ProductController()
+const orderController = new OrderController()
 
 router.get('/api/store/getDataAll', AuthenticateStore, storeController.OnGetDataAll)
 router.post('/api/store/signin', [
@@ -24,7 +26,8 @@ router.post('/api/store/register', upload.single('image'), [
     check('age').isString(),
     check('gender').isString(),
 ], storeController.OnRegister)
-router.put('/api/store/updateProfile', AuthenticateStore, upload.single('image'), [
+router.post('/api/store/updateProfile', AuthenticateStore, upload.single('image'), [
+    check('storeCode').isString(),
     check('name').isString(),
     check('age').isString(),
     check('weight').isString(),
@@ -54,5 +57,6 @@ router.get('/api/store/product/delete/:code', AuthenticateStore, productControll
 router.post('/api/store/updateConcept', AuthenticateStore, [
     check('concept').isString()
 ], storeController.OnUpdateConcept)
+router.get('/api/store/orders/get', AuthenticateStore, orderController.OnGetOrderStore)
 
 export const storeRouter = router

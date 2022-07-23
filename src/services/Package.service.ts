@@ -13,7 +13,7 @@ export class PackageService extends DBconnect {
                             package_payment.user_confirm, 
                             package_payment.bank_ref 
                     FROM package_order 
-                    JOIN package_payment 
+                    LEFT JOIN package_payment 
                         ON (package_order.pack_order_id = package_payment.package_order_id)
                     ) as pack
                     WHERE pack.member_id = ? AND pack.status_confirm = "pending" 

@@ -76,10 +76,6 @@ export const ViewProductAllStore = sequelize.define('view_product_all_store',
         type: DataTypes.STRING(255),
         allowNull: false
     },
-    store_priority: {
-        type: DataTypes.INTEGER,
-        allowNull: false
-    },
     product_img: {
         type: DataTypes.TEXT,
         allowNull: false

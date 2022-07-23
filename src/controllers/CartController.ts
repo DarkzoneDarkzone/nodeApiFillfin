@@ -1,9 +1,6 @@
-import { OrdersCart } from './../models/ordersCart';
-import { Product } from './../models/product';
-import { ViewService } from './../services/View.service';
-import { sequelize } from './../util/database';
-import { Op } from 'sequelize'
-import * as Config from '../util/config'
+import { OrdersCart } from './../models/ordersCart'
+import { Product } from './../models/product'
+import { ViewService } from './../services/View.service'
 import 'moment/locale/th'
 import moment from 'moment'
 import { validationResult } from 'express-validator'

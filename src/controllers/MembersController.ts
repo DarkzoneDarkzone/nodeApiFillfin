@@ -1,11 +1,9 @@
-import { sequelize } from './../util/database';
-import { ViewService } from './../services/View.service';
 import { PackageOrder } from './../models/packageOrder';
-import { Package } from './../models/package';
-import { Members } from './../models/members';
+import { sequelize } from './../util/database'
+import { ViewService } from './../services/View.service'
+import { Members } from './../models/members'
 import * as jwt from 'jsonwebtoken'
 import * as Config from '../util/config'
-import { Op } from 'sequelize'
 import 'moment/locale/th'
 import moment from 'moment'
 import bcrypt from 'bcrypt'
@@ -39,6 +37,7 @@ export class MembersController extends ViewService {
                 description: 'member was not found.'
             })
         }
+        const package_sel = await PackageOrder.findOne({where:{member_id: finding.id, status_confirm: 'pending', status_payment: 'pending'}})
         if(!(req.body.password == finding.password)){
             return res.status(401).json({
                 status: false,
@@ -66,7 +65,8 @@ export class MembersController extends ViewService {
                     refresh_token: finding.refresh_token,
                     member_code: finding.member_code,
                     gender: finding.gender,
-                    userName: finding.username
+                    userName: finding.username,
+                    packageId: (package_sel)?package_sel.package_id:null 
                 }
             })
         } catch(error){
@@ -111,7 +111,6 @@ export class MembersController extends ViewService {
         }, `${Config.secretKey}`)
         const str_member_code = `${req.body.username}.${req.body.password}${moment().format('YYYYMMDDHHmmss')}`
         let member_code = await bcrypt.hash(str_member_code, 10)
-        const package_select = await Package.findOne({where:{package_id: req.body.package_id}})
         const t = await sequelize.transaction()
         try {
             /* end upload image */
@@ -124,24 +123,12 @@ export class MembersController extends ViewService {
                 password: req.body.password,
                 isStore: 'no'
             }, { transaction: t })
-            const begin = moment().format('YYYY-MM-DD HH:mm:ss')
-            // const expire = moment(begin).add(package_select.day, 'days').format('YYYY-MM-DD HH:mm:ss')
-            const pack_order = await PackageOrder.create({
-                package_id: req.body.package_id,
-                begin: begin,
-                expire: begin,
-                status_expire: "no",
-                status_confirm: "pending",
-                status_payment: "notpay",
-                member_id: user.id,
-                gender: user.gender
-            }, { transaction: t })
             await t.commit()
             return res.status(201).json({
                 status: true,
                 message: 'ok',
                 description: 'data was created.',
-                data: user.member_code
+                memberCode: user.member_code
             })
         } catch(error){
             await t.rollback()

@@ -1,16 +1,12 @@
-import { sequelize } from './../util/database';
+import { sequelize } from './../util/database'
 import { BankProvider } from './../models/bankProvider'
 import { BankAccount } from './../models/bankAccount'
 import { BankService } from '../services/Bank.service'
-import { Op } from 'sequelize'
-import * as Config from '../util/config'
 import 'moment/locale/th'
-import moment from 'moment'
 import { validationResult } from 'express-validator'
 import fs from 'fs'
 const sharp = require('sharp')
 import path from 'path'
-import * as multerUpload from '../util/multerUpload'
 
 export class BankController extends BankService {
     OnGetBankAccount = async(req: any, res: any) => {

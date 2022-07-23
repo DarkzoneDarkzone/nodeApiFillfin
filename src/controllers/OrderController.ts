@@ -1,12 +1,12 @@
-import { Review } from './../models/review';
-import { OrdersCart } from './../models/ordersCart';
-import { Product } from './../models/product';
-import { OrdersProduct } from './../models/ordersProduct';
-import { OrdersPayment } from './../models/ordersPayment';
-import { OrdersAddress } from './../models/ordersAddress';
-import { ViewService } from './../services/View.service';
-import { Orders } from './../models/orders';
-import { sequelize } from './../util/database';
+import { Review } from './../models/review'
+import { OrdersCart } from './../models/ordersCart'
+import { Product } from './../models/product'
+import { OrdersProduct } from './../models/ordersProduct'
+import { OrdersPayment } from './../models/ordersPayment'
+import { OrdersAddress } from './../models/ordersAddress'
+import { ViewService } from './../services/View.service'
+import { Orders } from './../models/orders'
+import { sequelize } from './../util/database'
 import * as jwt from 'jsonwebtoken'
 import * as Config from '../util/config'
 import { Op } from 'sequelize'
@@ -17,7 +17,6 @@ import { validationResult } from 'express-validator'
 import fs from 'fs'
 const sharp = require('sharp')
 import path from 'path'
-import * as multerUpload from '../util/multerUpload'
 
 export class OrderController extends ViewService{
     OnCreateOrder = async(req: any, res: any) => {
@@ -30,7 +29,7 @@ export class OrderController extends ViewService{
             })
         }
         const member = req.authMember
-        const t = await sequelize.transaction();
+        const t = await sequelize.transaction()
         const order_number: string = "OD-"+moment().unix()+Math.floor((Math.random() * 100) + 1).toString().padStart(3, "0")
         const order_product: any = await this.query_product_incart(member.member_id)
         let missingProduct: any[] = []
@@ -49,6 +48,7 @@ export class OrderController extends ViewService{
                     order_number: order_number,
                     product_id: prod.id,
                     product_name: (data.status_premium=='yes')?data.name_premium:data.name_member,
+                    status: 'pending',
                     product_content: (data.status_premium=='yes')?data.content_premium:data.content_member,
                     price: (data.status_premium=='yes')?data.price_premium:data.price_standard
                 }
@@ -76,7 +76,7 @@ export class OrderController extends ViewService{
             if(req.file){
                 let upload = "/uploads"+req.file.destination.split("uploads").pop()
                 let dest = req.file.destination
-                var ext = path.extname(req.file.originalname);
+                var ext = path.extname(req.file.originalname)
                 let originalname = path.basename(req.file.originalname, ext)
                 for(let i = 1; fs.existsSync(dest+originalname+ext); i++){
                     originalname = originalname.split('(')[0]
@@ -150,22 +150,103 @@ export class OrderController extends ViewService{
     }
     OnGetOrderMember = async(req: any, res: any) => {
         const member = req.authMember
-        const order = await this.query_member_order(member.id)
+        const order: any = await this.query_member_order(member.member_id)
+        const order_response: any = order.map((data: any) => {
+            const arr_product: any = []
+            let product_id = data.product_id.split(',')
+            if(product_id.length > 0){
+                let product_name = data.product_name.split(',')
+                let product_content = data.product_content.split(',')
+                let price = data.price.split(',')
+                let product_status = data.product_status.split(',')
+                let store_id = data.store_id.split(',')
+                let product_image = data.product_image.split(',')
+                for (let i = 0; i < product_id.length; i++) {
+                    const dd = {
+                        product_id: product_id[i],
+                        product_name: product_name[i],
+                        product_content: product_content[i],
+                        price: price[i],
+                        product_status: product_status[i],
+                        store_id: store_id[i],
+                        product_image: product_image[i],
+                    }
+                    arr_product.push(dd)
+                }
+            }
+            return {
+                orderNumber: data.order_number,
+                paymentStatus: data.payment_status,
+                status: data.status,
+                totalPrice: data.totalprice,
+                netprice: data.netprice,
+                createdAt: data.createdAt,
+                updatedAt: data.updatedAt,
+                name: data.name,
+                address: data.address,
+                phone: data.phone,
+                district: data.district,
+                subdistrict: data.subdistrict,
+                province: data.province,
+                code: data.code,
+                note: data.note,
+                product: arr_product
+            }
+        })
         return res.status(200).json({
             status: true,
             message: 'ok',
             description: 'get data success.',
-            order: order
+            order: order_response
         })
     }
     OnGetOrderStore = async(req: any, res: any) => {
         const store = req.authStore
-        const finding = await this.query_store_order(store.store_id)
+        const order: any = await this.query_store_order(store.store_id)
+        const order_response: any = order.map((data: any) => {
+            const arr_product: any = []
+            let product_id = data.product_id.split(',')
+            if(product_id.length > 0){
+                let product_name = data.product_name.split(',')
+                let product_content = data.product_content.split(',')
+                let price = data.price.split(',')
+                let product_status = data.product_status.split(',')
+                let product_image = data.product_image.split(',')
+                for (let i = 0; i < product_id.length; i++) {
+                    const dd = {
+                        product_name: product_name[i],
+                        product_content: product_content[i],
+                        price: price[i],
+                        product_status: product_status[i],
+                        product_image: product_image[i],
+                    }
+                    arr_product.push(dd)
+                }
+            }
+            return {
+                orderNumber: data.order_number,
+                paymentStatus: data.payment_status,
+                status: data.status,
+                totalPrice: data.totalprice,
+                netprice: data.netprice,
+                createdAt: data.createdAt,
+                updatedAt: data.updatedAt,
+                name: data.name,
+                address: data.address,
+                phone: data.phone,
+                district: data.district,
+                subdistrict: data.subdistrict,
+                province: data.province,
+                code: data.code,
+                note: data.note,
+                product: arr_product
+            }
+        })
         return res.status(200).json({
             status: false,
             message: 'ok',
             description: 'get data success.',
-            order: finding
+            order: order_response
         })
     }
     OnReview = async(req: any, res: any) => {
@@ -178,24 +259,46 @@ export class OrderController extends ViewService{
             })
         }
         const member = req.authMember
-        const order: any = await this.query_order_one(req.body.orderNumber)
+        const order: any = await this.query_order_one(req.body.orderNumber, req.body.productId)
         if(!order){
             return res.status(404).json({
                 status: false,
                 message: 'error',
                 description: 'order was not found.'
             })
-        }   
+        }
+        if(order.status_product != 'success'){
+            return res.status(400).json({
+                status: false,
+                message: 'error',
+                description: 'product has delivery.'
+            })
+        }
         const t = await sequelize.transaction();
         try {
             const review = await Review.create({
-                member_id: member.memberId,
+                member_id: member.member_id,
                 message: req.body.message,
-                order_number: req.body.orderNumber,
+                product_id: order.product_id,
                 star: req.body.star,
                 display: 'yes',
                 store_id: order.store_id
             }, {transaction: t })
+            const order_prod = await OrdersProduct.update({
+                status: 'accepted'
+            },{
+                where:{
+                    order_number: order.order_number, 
+                    product_id: req.body.productId
+                }
+            }, { transaction: t})
+            const orders = await Orders.update({
+                status: 'success'
+            },{
+                where:{
+                    order_number: order.order_number, 
+                }
+            }, { transaction: t})
             await t.commit()
             return res.status(201).json({
                 status: true,

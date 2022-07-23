@@ -1,5 +1,5 @@
-import { OrdersProduct } from './../models/ordersProduct';
-import { Op } from 'sequelize'
+import { Website } from './../models/website';
+import { Store } from './../models/store';
 import * as Config from '../util/config'
 import 'moment/locale/th'
 import moment from 'moment'
@@ -7,7 +7,6 @@ import bcrypt from 'bcrypt'
 import fs from 'fs'
 const sharp = require('sharp')
 import path from 'path'
-import * as multerUpload from '../util/multerUpload'
 import { validationResult } from 'express-validator'
 import * as jwt from 'jsonwebtoken'
 import { User } from '../models/users'
@@ -220,30 +219,113 @@ export class UserController {
         }
     }
     OnUploadVideoStore = async(req: any, res: any) => {
-        if(req.file){
-            let dest = req.file.destination.split("uploads")
-            var ext = path.extname(req.file.originalname)
-            let originalname = path.basename(req.file.originalname, ext)
-            const newfolder = `${dest[0]}video${dest[1]}`
-            if(!fs.existsSync(newfolder)){
-                fs.mkdirSync(newfolder, { recursive: true })
-            } 
-            for(let i = 1; fs.existsSync(newfolder+originalname+ext); i++){
-                originalname = originalname.split('(')[0]
-                originalname += '('+i+')'
+        const store = await Store.findOne({where:{id: req.body.storeId}})
+        if(!store){
+            return res.status(404).json({
+                status: false,
+                message: 'error',
+                description: 'store was not found.'
+            })
+        }
+        try {
+            if(req.file){
+                let dest = req.file.destination.split("uploads")
+                var ext = path.extname(req.file.originalname)
+                let originalname = path.basename(req.file.originalname, ext)
+                const newfolder = `${dest[0]}video${dest[1]}`
+                if(!fs.existsSync(newfolder)){
+                    fs.mkdirSync(newfolder, { recursive: true })
+                } 
+                for(let i = 1; fs.existsSync(newfolder+originalname+ext); i++){
+                    originalname = originalname.split('(')[0]
+                    originalname += '('+i+')'
+                }
+                const path_upload = "video"+dest[1]+originalname+ext
+                fs.copyFile(req.file.path, dest[0]+path_upload, (err) => {
+                    if(err){
+                        console.log(err)
+                    }
+                })
+                fs.unlink( req.file.path, (err) => {
+                    if(err){
+                        console.log(err)
+                    }
+                })
+                store.profile_video = path_upload
+                store.save()
+                return res.status(201).json({
+                    sttaus: true,
+                    message: 'ok',
+                    description: 'video was uploaded.'
+                })
             }
-            const path_upload = "video"+dest[1]+originalname+ext
-            fs.copyFile(req.file.path, dest[0]+path_upload, (err) => {
-                if(err){
-                    console.log(err)
-                }
+            return res.status(404).json({
+                status: false,
+                message: 'error',
+                description: 'file was not found.'
             })
-            fs.unlink( req.file.path, (err) => {
-                if(err){
-                    console.log(err)
-                }
+        } catch(error){
+            return res.status(500).json({
+                status: false,
+                message: 'error',
+                description: 'something went wrong.'
             })
-            return res.json({name: path_upload})
+        }
+    }
+    OnUpdateContent = async(req: any, res: any) => {
+        const website = await Website.findOne({where:{id: req.body.id}})
+        if(!website){
+            return res.status(404).json({
+                status: false,
+                message: 'error',
+                description: 'content was not found.'
+            })
+        }
+        try {
+            if(req.file){
+                let dest = req.file.destination.split("uploads")
+                var ext = path.extname(req.file.originalname)
+                let originalname = path.basename(req.file.originalname, ext)
+                const newfolder = `${dest[0]}video${dest[1]}`
+                if(!fs.existsSync(newfolder)){
+                    fs.mkdirSync(newfolder, { recursive: true })
+                } 
+                for(let i = 1; fs.existsSync(newfolder+originalname+ext); i++){
+                    originalname = originalname.split('(')[0]
+                    originalname += '('+i+')'
+                }
+                const path_upload = "video"+dest[1]+originalname+ext
+                fs.copyFile(req.file.path, dest[0]+path_upload, (err) => {
+                    if(err){
+                        console.log(err)
+                    }
+                })
+                fs.unlink( req.file.path, (err) => {
+                    if(err){
+                        console.log(err)
+                    }
+                })
+                website.video_link = path_upload
+            }
+            website.type = req.body.type
+            website.title = req.body.title
+            website.content = req.body.content
+            website.h1 = req.body.h1
+            website.h2 = req.body.h2
+            website.image_link = req.body.image_link
+            website.display = req.body.display
+            website.save()
+            return res.status(201).json({
+                sttaus: true,
+                message: 'ok',
+                description: 'content was updated.'
+            })
+        } catch(error){
+            return res.status(500).json({
+                status: false,
+                message: 'error',
+                description: 'something went wrong.'
+            })
         }
     }
 }

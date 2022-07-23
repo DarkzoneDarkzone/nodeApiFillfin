@@ -70,35 +70,61 @@ export class ViewService extends DBconnect {
     }
     query_member_order = async(member_id: any) => {
         sql = `SELECT * FROM 
-                    (SELECT orders.*,
-                            orders_address.name, 
-                            orders_address.address, 
-                            orders_address.phone, 
-                            orders_address.district, 
-                            orders_address.subdistrict, 
-                            orders_address.province, 
-                            orders_address.code,
-                            orders_address.note,
-                            ord_product.product_id, 
-                            ord_product.product_name, 
-                            ord_product.product_content, 
-                            ord_product.price, 
-                            ord_product.store_id 
-                    FROM orders 
+                        (SELECT order_number, payment_status, status, totalprice, netprice, member_id, createdAt,
+                            updatedAt, name, address, phone, district, subdistrict, province, code, note,
+                            GROUP_CONCAT(product_id) as product_id,
+                            GROUP_CONCAT(product_name) as product_name,
+                            GROUP_CONCAT(product_content) as product_content,
+                            GROUP_CONCAT(price) as price,
+                            GROUP_CONCAT(product_status) as product_status,
+                            GROUP_CONCAT(store_id) as store_id,
+                            GROUP_CONCAT(product_image) as product_image
+                        FROM 
+                            (SELECT orders.*,
+                                orders_address.name, 
+                                orders_address.address, 
+                                orders_address.phone, 
+                                orders_address.district, 
+                                orders_address.subdistrict, 
+                                orders_address.province, 
+                                orders_address.code,
+                                orders_address.note,
+                                ord_product.product_id, 
+                                ord_product.product_name, 
+                                ord_product.product_content, 
+                                ord_product.price, 
+                                ord_product.store_id,
+                                ord_product.status as product_status,
+                                ord_product.path_img as product_image
+                            FROM orders 
                             JOIN orders_address ON (orders.order_number = orders_address.order_number)
                             JOIN 
                                 (SELECT orders_product.*, 
-                                    product.store_id 
+                                    product.store_id,
+                                    product.path_img
                                 FROM orders_product 
-                                JOIN product ON (orders_product.product_id = product.id)
-                                ) as ord_product 
-                            ON (orders.order_number = ord_product.order_number)
-                    ) as ord 
-                WHERE ord.member_id = ? ORDER BY ord.createdAt`
+                                JOIN (SELECT product.*, 
+                                        product_image.path_img
+                                FROM product JOIN product_image ON (product.id = product_image.product_id) 
+                                GROUP BY product.id) as product 
+                            ON (orders_product.product_id = product.id)
+                        ) as ord_product 
+                        ON (orders.order_number = ord_product.order_number)
+                        ) as ord GROUP BY ord.order_number
+                ) as mem_ord WHERE mem_ord.member_id = ? ORDER BY mem_ord.createdAt DESC`
         return this.findAll(sql, [member_id])
     }
     query_store_order = async(store_id: any) => {
         sql = `SELECT * FROM 
+                    (SELECT order_number, payment_status, status, totalprice, netprice, member_id, createdAt,
+                        updatedAt, name, address, phone, district, subdistrict, province, code, note, store_id,
+                        GROUP_CONCAT(product_id) as product_id,
+                        GROUP_CONCAT(product_name) as product_name,
+                        GROUP_CONCAT(product_content) as product_content,
+                        GROUP_CONCAT(price) as price,
+                        GROUP_CONCAT(product_status) as product_status,
+                        GROUP_CONCAT(product_image) as product_image
+                    FROM
                     (SELECT orders.*,
                             orders_address.name, 
                             orders_address.address, 
@@ -112,23 +138,45 @@ export class ViewService extends DBconnect {
                             ord_product.product_name, 
                             ord_product.product_content, 
                             ord_product.price, 
-                            ord_product.store_id 
+                            ord_product.store_id,
+                            ord_product.status as product_status,
+                            ord_product.path_img as product_image
                     FROM orders 
                             JOIN orders_address ON (orders.order_number = orders_address.order_number)
                             JOIN 
                                 (SELECT orders_product.*, 
-                                    product.store_id 
+                                    product.store_id,
+                                    product.path_img
                                 FROM orders_product 
-                                JOIN product ON (orders_product.product_id = product.id)
-                                ) as ord_product 
+                                JOIN (SELECT product.*, 
+                                        product_image.path_img
+                                FROM product JOIN product_image ON (product.id = product_image.product_id) 
+                                GROUP BY product.id) as product 
+                            ON (orders_product.product_id = product.id)
+                            ) as ord_product
                             ON (orders.order_number = ord_product.order_number)
-                    ) as ord 
-                WHERE ord.store_id = ? ORDER BY ord.createdAt`
+                    ) as ord GROUP BY ord.order_number, ord.store_id) as store_order
+                WHERE store_order.store_id = ? ORDER BY store_order.createdAt DESC`
         return this.findAll(sql, [store_id])
     }
-    query_order_one = async(order_number: any) => {
+    query_order_one = async(order_number: any, product_id: any) => {
         sql = `SELECT * FROM 
-                    (SELECT * FROM orders 
+                    (SELECT orders.*,
+                            orders_address.name,
+                            orders_address.address,
+                            orders_address.phone,
+                            orders_address.district,
+                            orders_address.subdistrict,
+                            orders_address.province,
+                            orders_address.code,
+                            orders_address.note,
+                            ord_product.product_id,
+                            ord_product.product_name,
+                            ord_product.product_content,
+                            ord_product.price,
+                            ord_product.status as status_product,
+                            ord_product.store_id
+                         FROM orders 
                         JOIN orders_address ON (orders.order_number = orders_address.order_number)
                         JOIN 
                             (SELECT orders_product.*, 
@@ -138,7 +186,17 @@ export class ViewService extends DBconnect {
                             ) as ord_product 
                         ON (orders.order_number = ord_product.order_number)
                     ) as ord 
-                WHERE ord.order_number = ?`
-        return this.findOne(sql, [order_number])
+                WHERE ord.order_number = ? AND ord.product_id = ?`
+        return this.findOne(sql, [order_number, product_id])
+    }
+    queryReviewForMember = async(store_id: any) => {
+        sql = `SELECT   review.id as reviewId,
+                        members.username, 
+                        review.message, 
+                        review.star, 
+                        review.store_id, 
+                        review.display  
+                FROM review JOIN members ON (review.member_id = members.id) where review.display = "yes" AND store_id = ?`
+        return this.findAll(sql, [store_id])
     }
 }

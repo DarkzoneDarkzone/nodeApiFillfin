@@ -47,7 +47,7 @@ export function OnInit(){
         UsersPermission,
         Website,
         Ads,
-        Banner
+        Banner,
     }
     sequelize.sync(); 
 }
