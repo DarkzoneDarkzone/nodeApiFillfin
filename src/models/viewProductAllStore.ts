@@ -80,6 +80,9 @@ export const ViewProductAllStore = sequelize.define('view_product_all_store',
         type: DataTypes.TEXT,
         allowNull: false
     },
+    totalProduct: {
+        type: DataTypes.INTEGER
+    }
 },
 {
     sequelize,

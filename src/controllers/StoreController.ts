@@ -1,3 +1,5 @@
+import { TokenLog } from './../models/tokenLog';
+import { Log } from './../models/log';
 import { ViewService } from './../services/View.service';
 import { Review } from './../models/review';
 import { ViewProduct } from './../models/viewProduct';
@@ -38,7 +40,7 @@ export class StoreController extends ViewService{
             username: req.body.username,
             gender: req.body.gender,
             at: new Date().getTime()
-        }, `${Config.secretKey}`, { expiresIn: '1d' })
+        }, `${Config.secretKey}`, { expiresIn: '10m' })
         /* generate refresh_token when register and no expire */
         const refresh_token = jwt.sign({
             username: req.body.username,
@@ -152,9 +154,32 @@ export class StoreController extends ViewService{
                 username: finding.username,
                 gender: finding.gender,
                 at: new Date().getTime()
-            }, `${Config.secretKey}`, { expiresIn: '1d' })
+            }, `${Config.secretKey}`, { expiresIn: '10m' })
+            const refresh_token = jwt.sign({
+                username: finding.username,
+                gender: finding.gender,
+                section: 'store',
+                at: new Date().getTime(),
+                token: access_token
+            }, `${Config.secretKey}`)
             finding.access_token = access_token
+            finding.refresh_token = refresh_token
             finding.save()
+            const ip = req.ip.split(':')[3]
+            const userAgent = req.headers['user-agent']
+            const logging = await Log.create({
+                user_code: finding.store_code,
+                refresh_token: refresh_token,
+                details: userAgent,
+                ip_address: ip,
+                section: 'store',
+                status: 'active',
+            }) 
+            const tokenLogging = await TokenLog.create({
+                refresh_token: refresh_token,
+                section: 'store',
+                active: true,
+            })
             return res.status(200).json({
                 status: true,
                 message: 'ok',
@@ -163,7 +188,8 @@ export class StoreController extends ViewService{
                     access_token: access_token,
                     refresh_token: finding.refresh_token,
                     storeName: finding.name,
-                    storeCode: finding.store_code
+                    storeCode: finding.store_code,
+                    gender: finding.gender
                 }
             })
         } catch(error){
@@ -332,5 +358,59 @@ export class StoreController extends ViewService{
                 description: 'something went wrong.'
             })
         }
+    }
+    OnGetStoreAll = async(req: any, res: any) => {
+        const errors = validationResult(req)
+        if(!errors.isEmpty()){
+            return res.status(400).json({
+                status: false,
+                message: 'error',
+                errorMessage: errors.array()
+            })
+        }
+        const finding = await Store.findAll({where:{gender: req.query.gender}})
+        const filter_data = finding.map((data: any) => {
+            return {
+                storeCode: data.store_code,
+                name: data.name,
+                username: data.username,
+                password: data.password,
+                profileImg: data.profileImg,
+                profileVideo: data.profileVideo,
+                concept: data.concept,
+                age: data.age,
+                weight: data.weight,
+                height: data.height,
+                bwd: data.bwd,
+            }
+        })
+        return res.status(200).json({
+            status: true,
+            message: 'ok',
+            description: 'get store success.',
+            store: finding
+        })
+    }
+    OnChangeStatusStore = async(req: any, res: any) => {
+        const errors = validationResult(req)
+        if(!errors.isEmpty()){
+            return res.status(400).json({
+                status: false,
+                message: 'error',
+                errorMessage: errors.array()
+            })
+        }
+        const finding = await Store.update(
+            {
+                status: req.body.status
+            },{
+                where: { store_code: req.body.storeCode }
+            }
+        )
+        return res.status(200).json({
+            status: true,
+            message: 'ok',
+            description: 'update store success.'
+        })
     }
 }

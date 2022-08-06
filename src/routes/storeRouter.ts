@@ -34,7 +34,7 @@ router.post('/api/store/updateProfile', AuthenticateStore, upload.single('image'
     check('height').isString(),
     check('bwh').isString(),
 ], storeController.OnUpdateProfile)
-router.post('/api/store/product/create', AuthenticateStore, upload.array('image'), [
+router.post('/api/store/product/create', AuthenticateStore, upload.fields([{name: 'standard', maxCount: 2}, {name: 'premium', maxCount: 2}]), [
     check('name_member').isString(),
     check('content_member').isString(),
     check('name_premium').isString(),
@@ -43,7 +43,7 @@ router.post('/api/store/product/create', AuthenticateStore, upload.array('image'
     check('price_premium').isNumeric(),
     check('clip').isString(),
 ], productController.OnCreateProduct)
-router.post('/api/store/productPre/create', AuthenticateStore, upload.array('image'), [
+router.post('/api/store/productPre/create', AuthenticateStore, upload.fields([{name: 'premium', maxCount: 2}]), [
     check('name_premium').isString(),
     check('content_premium').isString(),
     check('price_premium').isNumeric(),

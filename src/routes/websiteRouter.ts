@@ -25,11 +25,14 @@ router.post('/api/website/updateAds', upload.single('image'), [
     check('position').isString(),
     check('priority').isString(),
 ], AuthenticateAdmin, adsController.OnUpdateAds)
+
 router.post('/api/website/updateBanner', upload.single('image'), [
     check('title').isString(),
     check('display').isString(),
     check('content').isString(),
 ], AuthenticateAdmin, bannerController.OnUpdateBanner)
 router.get('/api/website/content/:type', contentController.OnGetContent)
+
+router.post('/api/test/website/createAds', upload.single('upload'), contentController.testUploadCK)
 
 export const websiteRouter = router

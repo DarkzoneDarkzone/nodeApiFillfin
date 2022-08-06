@@ -1,3 +1,4 @@
+import { TokenLog } from './../models/tokenLog';
 import { PackageOrder } from './../models/packageOrder';
 import { sequelize } from './../util/database'
 import { ViewService } from './../services/View.service'
@@ -8,6 +9,7 @@ import 'moment/locale/th'
 import moment from 'moment'
 import bcrypt from 'bcrypt'
 import { validationResult } from 'express-validator'
+import { Log } from '../models/log';
 
 export class MembersController extends ViewService {
     OnGetAll = async(req: any, res: any) => {
@@ -29,6 +31,7 @@ export class MembersController extends ViewService {
                 errorMessage: errors.array()
             })
         }
+        /** check user  */
         const finding = await Members.findOne({where:{username: req.body.username}})
         if(!finding){
             return res.status(404).json({
@@ -37,7 +40,7 @@ export class MembersController extends ViewService {
                 description: 'member was not found.'
             })
         }
-        const package_sel = await PackageOrder.findOne({where:{member_id: finding.id, status_confirm: 'pending', status_payment: 'pending'}})
+        /** check password */
         if(!(req.body.password == finding.password)){
             return res.status(401).json({
                 status: false,
@@ -45,6 +48,8 @@ export class MembersController extends ViewService {
                 description: 'password was not correct.'
             })
         }
+        const package_sel = await PackageOrder.findOne({where:{member_id: finding.id, status_confirm: 'pending', status_payment: 'pending'}})
+        const current_package: any = await this.view_member_package(finding.id, finding.gender)
         try {
             /* generate new access_token */
             const access_token = jwt.sign({
@@ -53,9 +58,32 @@ export class MembersController extends ViewService {
                 username: finding.username,
                 gender: finding.gender,
                 at: new Date().getTime()
-            }, `${Config.secretKey}`, { expiresIn: '1d' })
+            }, `${Config.secretKey}`, { expiresIn: '10m' })
+            const refresh_token = jwt.sign({
+                username: finding.username,
+                gender: finding.gender,
+                section: 'member',
+                at: new Date().getTime(),
+                token: access_token
+            }, `${Config.secretKey}`)
             finding.access_token = access_token
+            finding.refresh_token = refresh_token
             finding.save()
+            const ip = req.ip.split(':')[3]
+            const userAgent = req.headers['user-agent']
+            const logging = await Log.create({
+                user_code: finding.member_code,
+                refresh_token: refresh_token,
+                details: userAgent,
+                ip_address: ip,
+                section: 'member',
+                status: 'active',
+            }) 
+            const tokenLogging = await TokenLog.create({
+                refresh_token: refresh_token,
+                section: 'member',
+                active: true,
+            })
             return res.status(200).json({
                 status: true,
                 message: 'ok',
@@ -66,7 +94,8 @@ export class MembersController extends ViewService {
                     member_code: finding.member_code,
                     gender: finding.gender,
                     userName: finding.username,
-                    packageId: (package_sel)?package_sel.package_id:null 
+                    packageId: (package_sel)?package_sel.package_id:null,
+                    dateExpire: current_package.expire
                 }
             })
         } catch(error){
@@ -101,7 +130,7 @@ export class MembersController extends ViewService {
             username: req.body.username,
             gender: req.body.gender,
             at: new Date().getTime()
-        }, `${Config.secretKey}`, { expiresIn: '1d' })
+        }, `${Config.secretKey}`, { expiresIn: '10m' })
         /* generate refresh_token when register and no expire */
         const refresh_token = jwt.sign({
             username: req.body.username,
@@ -109,11 +138,12 @@ export class MembersController extends ViewService {
             at: new Date().getTime(),
             token: access_token
         }, `${Config.secretKey}`)
+        /** generate member_code */
         const str_member_code = `${req.body.username}.${req.body.password}${moment().format('YYYYMMDDHHmmss')}`
         let member_code = await bcrypt.hash(str_member_code, 10)
         const t = await sequelize.transaction()
         try {
-            /* end upload image */
+            /** create member */
             const user = await Members.create({
                 member_code: member_code.replace(/\W/g,""),
                 access_token: access_token,
@@ -174,8 +204,7 @@ export class MembersController extends ViewService {
         }
     }
     OnGetAccessToken = async (req: any, res: any) => {
-        /* finding old data */
-        const finding = await Members.findOne({where:{refresh_token: req.params.token}})
+        const finding = await Members.findOne({where:{refresh_token: req.body.token}})
         if(!finding){
             return res.status(404).json({
                 status: false,
@@ -183,20 +212,30 @@ export class MembersController extends ViewService {
                 description: 'member is not found.'
             })
         }
+        const token = await TokenLog.findOne({where:{refresh_token: finding.refresh_token}})
+        if(!token.active){
+            return res.status(400).json({
+                status: false,
+                message: 'error',
+                description: 'token has been revoked.'
+            })
+        }
         try {
             /* generate new access_token */
             const access_token = jwt.sign({
+                member_id: finding.id,
+                section: (finding.isStore=="yes")?'store':'member',
                 username: finding.username,
-                gender: req.params.gender,
+                gender: finding.gender,
                 at: new Date().getTime()
-            }, `${Config.secretKey}`, {expiresIn: '1d'})
+            }, `${Config.secretKey}`, {expiresIn: '10m'})
             finding.access_token = access_token
             finding.save()
             return res.status(200).json({
                 status: true,
                 message: 'ok',
-                description: 'generated new access_token.',
-                data: access_token
+                description: 'generated new access token.',
+                token: access_token
             })
         } catch(error){
             return res.status(500).json({
@@ -213,34 +252,25 @@ export class MembersController extends ViewService {
                 message: 'Not Authenticated.'
             })
         }
-        /* receive bearer token from header */
-        let decodedToken: any
-        /* if having token */
-        if(access_token != ''){
-            try {
-                /* verify token for get data and check expire token */
-                decodedToken = await jwt.verify(access_token, `${Config.secretKey}`)
-                /* if token was expired */
-                if(moment().unix() > decodedToken.exp){
-                    return res.status(401).json({
-                        status: false,
-                        message: 'error',
-                        description: 'token was expired.'
-                    })
-                }
-                /* data keep for use when update data in database */
-                req.authToken = access_token
-                return res.status(200).json({
-                    status: true,
-                    message: 'token is correct.'
-                })
-            } catch(error) {
-                return res.status(401).json({ 
-                    status: false, 
-                    message:'error', 
-                    description: "authentication failed, token was expired!"
+        try {
+            const accessToken: any = await jwt.verify(access_token, `${Config.secretKey}`)
+            if(moment().unix() > accessToken.exp){
+                return res.status(401).json({
+                    status: false,
+                    message: 'error',
+                    description: 'token was expired.'
                 })
             }
+            return res.status(200).json({
+                status: true,
+                message: 'token is correct.'
+            })
+        } catch(error) {
+            return res.status(401).json({ 
+                status: false,
+                message:'error',
+                description: "authentication failed, token was expired!"
+            })
         }
     }
 }

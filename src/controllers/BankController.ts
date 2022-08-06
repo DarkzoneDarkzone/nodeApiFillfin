@@ -28,18 +28,18 @@ export class BankController extends BankService {
             })
         }
         const finding_bank = await BankAccount.findOne({where:{bank_number: req.body.bank_number}})
-        if(!finding_bank){
+        if(finding_bank){
             return res.status(404).json({
                 status: false,
                 message: 'error',
-                description: 'data is not found.'
+                description: 'bank number has duplicated..'
             })
         }
         const t = await sequelize.transaction()
         try {
             const bank_account = await BankAccount.create({
                 name: req.body.name,
-                bank_account: req.body.bank_account,
+                bank_number: req.body.bank_number,
                 branch: req.body.branch,
                 bank_provider_id: req.body.bank_provider_id,
                 status: 'active'
@@ -59,6 +59,28 @@ export class BankController extends BankService {
             })
         }
     }
+    OnChangeStatusBank = async(req: any, res: any) => {
+        const errors = validationResult(req)
+        if(!errors.isEmpty()){
+            return res.status(400).json({
+                status: false,
+                message: 'error',
+                errorMessage: errors.array()
+            })
+        }
+        const finding = await BankAccount.update(
+            {
+                status: req.body.status
+            },{
+                where: { id: req.body.bank_id }
+            }
+        )
+        return res.status(200).json({
+            status: true,
+            message: 'ok',
+            description: 'update bank success.'
+        })
+    }
     OnUpdateBankAccount = async(req: any, res: any) => {
         const errors = validationResult(req)
         if(!errors.isEmpty()){
@@ -68,7 +90,7 @@ export class BankController extends BankService {
                 errorMessage: errors.array()
             })
         }
-        const finding = await BankAccount.findOne({where:{id: req.body.id}})
+        const finding = await BankAccount.findOne({where:{id: req.body.bank_id}})
         if(!finding){
             return res.status(404).json({
                 status: false,
@@ -81,7 +103,6 @@ export class BankController extends BankService {
             finding.bank_account = req.body.bank_account
             finding.branch = req.body.branch
             finding.bank_provider_id = req.body.bank_provider_id
-            finding.status = req.body.status
             finding.save()
             return res.status(201).json({
                 status: true,

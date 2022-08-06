@@ -57,9 +57,9 @@ export class AdminStoreController {
                 store_id: store_profile.id
             }, { transaction: t })
             let productImage: any[] = []
-            if(req.files){
-                let count = 0
-                for (const file of req.files) {
+            let count = 0
+            if(req.files.standard){
+                for (const file of req.files.standard) {
                     let upload = "/uploads"+file.destination.split("uploads").pop()
                     let dest = file.destination
                     var ext = path.extname(file.originalname);
@@ -86,7 +86,41 @@ export class AdminStoreController {
                         path_img: image,
                         hover: (count==1)?"yes":"no",
                         display: "yes",
-                        premium: (count>1)?"yes":"no",
+                        premium: "no",
+                    }
+                    count++
+                    productImage.push(arr)
+                }
+            }
+            if(req.files.premium){
+                for (const file of req.files.premium) {
+                    let upload = "/uploads"+file.destination.split("uploads").pop()
+                    let dest = file.destination
+                    var ext = path.extname(file.originalname);
+                    let originalname = path.basename(file.originalname, ext)
+                    for(let i = 1; fs.existsSync(dest+originalname+ext); i++){
+                        originalname = originalname.split('(')[0]
+                        originalname += '('+i+')'
+                    }
+                    const image = await sharp(file.path)
+                    .resize(200, 200)
+                    .withMetadata()
+                    .jpeg({ quality: 95})
+                    .toFile( path.resolve(file.destination, originalname+ext))
+                    .then((data: any) => {
+                        fs.unlink( file.path, (err) => {
+                            if(err){
+                                console.log(err)
+                            }
+                        })
+                        return upload+originalname+ext
+                    })
+                    const arr = {
+                        product_id: product_result.id,
+                        path_img: image,
+                        hover: "no",
+                        display: "yes",
+                        premium: "yes",
                     }
                     count++
                     productImage.push(arr)
@@ -145,8 +179,8 @@ export class AdminStoreController {
                 store_id: store_profile.id
             }, { transaction: t })
             let productImage: any[] = []
-            if(req.files){
-                for (const file of req.files) {
+            if(req.files.premium){
+                for (const file of req.files.premium) {
                     let upload = "/uploads"+file.destination.split("uploads").pop()
                     let dest = file.destination
                     var ext = path.extname(file.originalname);

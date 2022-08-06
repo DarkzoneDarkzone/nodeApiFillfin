@@ -1,3 +1,5 @@
+import { TokenLog } from './../models/tokenLog';
+import { Log } from './../models/log';
 import { Website } from './../models/website';
 import { Store } from './../models/store';
 import * as Config from '../util/config'
@@ -21,6 +23,7 @@ export class UserController {
                 errorMessage: errors.array()
             })
         }
+        /** finding user */
         const finding = await User.findOne({where:{username: req.body.username}})
         if(finding){
             return res.status(400).json({
@@ -33,18 +36,21 @@ export class UserController {
         const access_token = jwt.sign({
             username: req.body.username,
             at: new Date().getTime()
-        }, `${Config.secretKey}`, { expiresIn: '1d' })
+        }, `${Config.secretKey}`, { expiresIn: '10m' })
         /* generate refresh_token when register and no expire */
         const refresh_token = jwt.sign({
             username: req.body.username,
             at: new Date().getTime(),
             token: access_token
         }, `${Config.secretKey}`)
+        /** generate user_code */
         const users_str = req.body.username+Math.random().toString().substr(2, 8)+moment().unix()
         const users_code = await bcrypt.hash(users_str, 10)
+        /** hash password */
         const hashPass = await bcrypt.hash(req.body.password, 10)
         try {
             let profile_img = ''
+            /** upload image */
             if(req.file){
                 let upload = "/uploads"+req.file.destination.split("uploads").pop()
                 let dest = req.file.destination
@@ -69,6 +75,7 @@ export class UserController {
                 })
                 profile_img = image
             }
+            /** create user */
             const users = await User.create({
                 users_code: users_code.replace(/\W/g, ""),
                 access_token: access_token,
@@ -105,7 +112,9 @@ export class UserController {
             })
         }
         try {
+            /** find user */
             const finding = await User.findOne({where:{username: req.body.username}})
+            /** check password is correct */
             const isPasswordCorrect = await bcrypt.compare(req.body.password, finding.password)
             if(!isPasswordCorrect){
                 return res.status(401).json({
@@ -122,24 +131,40 @@ export class UserController {
                 username: req.body.username,
                 psermission: finding.permission,
                 at: new Date().getTime()
-            }, `${Config.secretKey}`, { expiresIn: '1d' })
+            }, `${Config.secretKey}`, { expiresIn: '10m' })
             /* generate refresh_token when register and no expire */
             const refresh_token = jwt.sign({
-                username: req.body.username,
+                username: finding.username,
+                gender: finding.gender,
+                section: 'store',
                 at: new Date().getTime(),
                 token: access_token
             }, `${Config.secretKey}`)
+            /** update access_token and refresh_token */
             finding.access_token = access_token
             finding.refresh_token = refresh_token
             finding.save()
+            const ip = req.ip.split(':')[3]
+            const userAgent = req.headers['user-agent']
+            const logging = await Log.create({
+                user_code: finding.users_code,
+                refresh_token: refresh_token,
+                details: userAgent,
+                ip_address: ip,
+                section: 'admin',
+                status: 'active',
+            }) 
+            const tokenLogging = await TokenLog.create({
+                refresh_token: refresh_token,
+                section: 'admin',
+                active: true,
+            })
             return res.status(201).json({
                 status: true,
                 message: 'ok',
                 description: 'password has checked.',
-                data: {
-                    access_token: access_token,
-                    refresh_token: refresh_token
-                }
+                access_token: access_token,
+                refresh_token: refresh_token
             })
         } catch(error){
             return res.status(500).json({
@@ -158,6 +183,7 @@ export class UserController {
                 errorMessage: errors.array()
             })
         }
+        /** finding user */
         const finding = await User.findOne({where:{users_code: req.body.adminCode}})
         if(!finding){
             return res.status(400).json({
@@ -167,6 +193,7 @@ export class UserController {
             })
         }
         try {
+            /** update data user */
             finding.email = req.body.email
             finding.permission = req.body.permission
             finding.status_confirm = req.body.status_confirm
@@ -195,6 +222,7 @@ export class UserController {
                 errorMessage: errors.array()
             })
         }
+        /** find user account */
         const user = await User.findOne({where:{users_code: req.params.code}})
         if(!user){
             return res.status(404).json({
@@ -204,6 +232,7 @@ export class UserController {
             })
         }
         try {
+            /** delete user account */
             user.destroy()
             return res.status(200).json({
                 status: true,
@@ -313,7 +342,6 @@ export class UserController {
             website.h1 = req.body.h1
             website.h2 = req.body.h2
             website.image_link = req.body.image_link
-            website.display = req.body.display
             website.save()
             return res.status(201).json({
                 sttaus: true,
@@ -327,5 +355,77 @@ export class UserController {
                 description: 'something went wrong.'
             })
         }
+    }
+    OnGetAccessToken = async(req: any, res: any) => {
+        const finding = await User.findOne({where:{refresh_token: req.body.token}})
+        if(!finding){
+            return res.status(404).json({
+                status: false,
+                message: 'error',
+                description: 'user is not found.'
+            })
+        }
+        const token = await TokenLog.findOne({where:{refresh_token: finding.refresh_token}})
+        if(!token.active){
+            return res.status(400).json({
+                status: false,
+                message: 'error',
+                description: 'token has been revoked.'
+            })
+        }
+        try {
+            /* generate new access_token */
+            const access_token = jwt.sign({
+                user_id: finding.users_code,
+                section: 'admin',
+                username: finding.username,
+                at: new Date().getTime()
+            }, `${Config.secretKey}`, {expiresIn: '10m'})
+            finding.access_token = access_token
+            finding.save()
+            return res.status(200).json({
+                status: true,
+                message: 'ok',
+                description: 'generated new access token.',
+                token: access_token
+            })
+        } catch(error){
+            return res.status(500).json({
+                status: false,
+                message: 'error',
+                description: 'Something went wrong.'
+            })
+        }
+    }
+    OnGetContent = async(req: any, res: any) => {
+        const finding = await Website.findAll()
+        return res.status(200).json({
+            status: true,
+            message: 'ok',
+            description: 'get content success.',
+            content: finding
+        })
+    }
+    OnChangeStatusContent = async(req: any, res: any) => {
+        const errors = validationResult(req)
+        if(!errors.isEmpty()){
+            return res.status(400).json({
+                status: false,
+                message: 'error',
+                errorMessage: errors.array()
+            })
+        }
+        const finding = await Website.update(
+            {
+                display: req.body.display
+            },{
+                where: { id: req.body.id }
+            }
+        )
+        return res.status(200).json({
+            status: true,
+            message: 'ok',
+            description: 'update content success.'
+        })
     }
 }

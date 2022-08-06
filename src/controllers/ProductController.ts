@@ -52,6 +52,7 @@ export class ProductController extends ViewService {
                 store_profile: data.store_profile,
                 store_concept: data.store_concept,
                 product_img: (data.pre_order=='yes')?data.store_profile:data.product_img,
+                totalProduct: data.totalProduct
             }
         })
         const filter_product_recom = product_recom.map((data: any) => {
@@ -122,7 +123,7 @@ export class ProductController extends ViewService {
             },
             attributes: ['product_code', 'name_member', 'content_member', 'name_premium', 'content_premium', 'price_standard', 'price_premium', 'recommend', 'pre_order',
                         'status', 'sex', 'clip', 'store_id', 'path_img', 'package_id', 'buy_limit', 'show_gift', 'price_sell', 'status_premium',
-                [sequelize.fn('GROUP_CONCAT', sequelize.col('path_img')), 'product_img']
+                        [sequelize.fn('GROUP_CONCAT', sequelize.col('path_img')), 'product_img']
             ],
             offset: offset,
             limit: limit,
@@ -141,9 +142,9 @@ export class ProductController extends ViewService {
         const filter_product = product.rows.map((data: any) => {
             return {
                 product_code: data.product_code,
-                name_product: (data.status_premium=='yes')?data.name_premium:data.name_member,
-                content_product: (data.status_premium=='yes')?data.content_premium:data.content_member,
-                price: (data.status_premium=='yes')?data.price_premium:data.price_standard,
+                name_product: (data.status_premium == 'yes')?data.name_premium:data.name_member,
+                content_product: (data.status_premium == 'yes')?data.content_premium:data.content_member,
+                price: (data.status_premium == 'yes')?data.price_premium:data.price_standard,
                 recommend: data.recommend,
                 sex: data.sex,
                 clip: data.clip,
@@ -280,9 +281,9 @@ export class ProductController extends ViewService {
                 priority: (prod_most_prior)?prod_most_prior.priority+1:0
             }, { transaction: t })
             let productImage: any[] = []
-            if(req.files){
-                let count = 0
-                for (const file of req.files) {
+            let count = 0
+            if(req.files.standard){
+                for (const file of req.files.standard) {
                     let upload = "/uploads"+file.destination.split("uploads").pop()
                     let dest = file.destination
                     var ext = path.extname(file.originalname);
@@ -309,7 +310,41 @@ export class ProductController extends ViewService {
                         path_img: image,
                         hover: (count==1)?"yes":"no",
                         display: "yes",
-                        premium: (count>1)?"yes":"no",
+                        premium: "no",
+                    }
+                    count++
+                    productImage.push(arr)
+                }
+            }
+            if(req.files.premium){
+                for (const file of req.files.premium) {
+                    let upload = "/uploads"+file.destination.split("uploads").pop()
+                    let dest = file.destination
+                    var ext = path.extname(file.originalname);
+                    let originalname = path.basename(file.originalname, ext)
+                    for(let i = 1; fs.existsSync(dest+originalname+ext); i++){
+                        originalname = originalname.split('(')[0]
+                        originalname += '('+i+')'
+                    }
+                    const image = await sharp(file.path)
+                    .resize(200, 200)
+                    .withMetadata()
+                    .jpeg({ quality: 95})
+                    .toFile( path.resolve(file.destination, originalname+ext))
+                    .then((data: any) => {
+                        fs.unlink( file.path, (err) => {
+                            if(err){
+                                console.log(err)
+                            }
+                        })
+                        return upload+originalname+ext
+                    })
+                    const arr = {
+                        product_id: product_result.id,
+                        path_img: image,
+                        hover: "no",
+                        display: "yes",
+                        premium: "yes",
                     }
                     count++
                     productImage.push(arr)
@@ -369,8 +404,8 @@ export class ProductController extends ViewService {
                 priority: (prod_most_prior)?prod_most_prior.priority+1:0
             }, { transaction: t })
             let productImage: any[] = []
-            if(req.files){
-                for (const file of req.files) {
+            if(req.files.premium){
+                for (const file of req.files.premium) {
                     let upload = "/uploads"+file.destination.split("uploads").pop()
                     let dest = file.destination
                     var ext = path.extname(file.originalname);

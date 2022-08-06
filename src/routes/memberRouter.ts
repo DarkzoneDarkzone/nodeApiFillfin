@@ -28,8 +28,12 @@ router.post('/api/member/register', [
     check('password').notEmpty().isString(),
     check('gender').notEmpty().isString(),
 ], membersController.OnCreate)
-router.post('/api/member/checkToken', membersController.OnCheckAccessToken)
-router.post('/api/member/getToken', membersController.OnGetAccessToken)
+router.post('/api/member/checkToken', [
+    check('token').isString()
+], membersController.OnCheckAccessToken)
+router.post('/api/member/getToken', [
+    check('token').isString()
+], membersController.OnGetAccessToken)
 /** for package */
 router.get('/api/package/get', packageController.OnGetPackageAll)
 router.get('/api/package/statusPayment/:member_code', packageController.OnCheckStatusPayment)
@@ -44,8 +48,6 @@ router.post('/api/package/createPayment', upload.single('slip'), [
     check('packageId').notEmpty(),
 ], packageController.OnCreatePayment)
 router.post('/api/package/renewal', upload.single('slip'), AuthenticateMember, [
-    check('memberCode').notEmpty().isString(),
-    check('packageId').notEmpty().isString(),
     check('bankRef').notEmpty(),
 ], packageController.OnRenewalPackage)
 /** for show product */

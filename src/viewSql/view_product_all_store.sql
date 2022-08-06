@@ -1,4 +1,4 @@
-SELECT all_store.*
+SELECT all_store.*, COUNT(all_store.product_code) as totalProduct
 FROM (
        SELECT 
               store.name as store_name,
@@ -17,4 +17,5 @@ FROM (
            	GROUP BY product.id
        ) as products
        ON (store.id = products.store_id AND products.status = "active")
+       ORDER BY products.pre_order ASC
 ) as all_store GROUP BY all_store.store_id

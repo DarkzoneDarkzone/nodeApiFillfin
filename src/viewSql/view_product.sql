@@ -17,14 +17,13 @@ from (
                 from (
                     select product.*,
                         product_image.path_img,
-                        row_number() over ( partition by product.id order by product_image.premium desc) AS itemNum 
+                        row_number() over ( partition by product.id order by product_image.premium asc) AS itemNum 
                     from (product 
                         join product_image 
                             on(product.id = product_image.product_id)
                         ) 
-                        order by row_number() over ( partition by product.id order by product_image.premium desc)
-                ) product order by product.id
-            ) all_product 
+                ) product order by product.id, itemNum
+            ) all_product
             on (
                 store.id = all_product.store_id 
                 and all_product.status = 'active'

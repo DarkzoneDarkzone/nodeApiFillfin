@@ -27,7 +27,7 @@ const postController = new PostController()
 const productController = new ProductController()
 
 /** for authenticate */
-router.post('/api/admin/register', upload.single('image'), AuthenticateAdmin, [
+router.post('/api/admin/register', upload.single('image'), [
     check('username').isString(),
     check('password').isString(),
     check('email').isString(),
@@ -46,19 +46,28 @@ router.post('/api/admin/update', upload.single('image'), AuthenticateAdmin, [
     check('status').isString(),
 ], userController.OnUpdate)
 router.get('/api/admin/delete/:code', AuthenticateAdmin, userController.OnDelete)
+router.post('/api/admin/getToken', [
+    check('token').isString()
+], userController.OnGetAccessToken)
 /** for manage bank */
 router.get('/api/admin/bank/get', AuthenticateAdmin, bankController.OnGetBankAll)
+router.post('/api/admin/changeStatusBank', [
+    check('bank_id').notEmpty(),
+    check('status').isString().notEmpty()
+], AuthenticateAdmin, bankController.OnChangeStatusBank)
+router.get('/api/admin/bankProvider/get', AuthenticateAdmin, bankController.OnGetBankProvider)
 router.post('/api/admin/bank/create', AuthenticateAdmin, [
     check('name').isString(),
     check('bank_number').isString(),
     check('branch').isString(),
-    check('bank_id').isNumeric(),
+    check('bank_provider_id').isNumeric(),
 ], bankController.OnCreateBankAccount)
 router.post('/api/admin/bank/update', AuthenticateAdmin, [
     check('name').isString(),
     check('bank_number').isString(),
     check('branch').isString(),
     check('bank_id').isNumeric(),
+    check('bank_provider_id').isNumeric(),
 ], bankController.OnUpdateBankAccount)
 /** */
 router.get('/api/admin/member/get', AuthenticateAdmin, membersController.OnGetAll)
@@ -76,6 +85,10 @@ router.get('/api/admin/packageOrder/get', AuthenticateAdmin, packageController.O
 router.get('/api/admin/package/:paymentId/confirm', AuthenticateAdmin, packageController.OnConfirmPayment)
 /** for manage review */
 router.get('/api/admin/review/get', AuthenticateAdmin, reviewController.OnGetReview)
+router.post('/api/admin/changeStatusReview', [
+    check('id').notEmpty(),
+    check('display').isString().notEmpty()
+], AuthenticateAdmin, reviewController.OnChangeStatusReview)
 router.post('/api/admin/review/update', AuthenticateAdmin, [
     check('review_id').isNumeric(),
     check('display').isString()
@@ -84,15 +97,23 @@ router.post('/api/admin/review/update', AuthenticateAdmin, [
 router.post('/api/admin/store/videoUpload', upload.single('video'), AuthenticateAdmin, [
     check('storeId').isNumeric().notEmpty()
 ], userController.OnUploadVideoStore)
+router.get('/api/admin/content/get', AuthenticateAdmin, userController.OnGetContent)
 router.post('/api/admin/content/update', [
+    check('id').notEmpty(),
     check('type').isString(),
     check('title').isString(),
     check('content').isString(),
     check('h1').isString(),
     check('h2').isString(),
-    check('display').isString()
+    check('image_link').isString(),
 ], upload.single('video'), AuthenticateAdmin, userController.OnUpdateContent)
+router.post('/api/admin/changeStatusContent', [
+    check('id').notEmpty(),
+    check('display').isString().notEmpty()
+], AuthenticateAdmin, userController.OnChangeStatusContent)
 /** for manage store */
+router.get('/api/admin/store/get', AuthenticateAdmin, storeController.OnGetStoreAll)
+router.post('/api/admin/store/changeStatusStore', AuthenticateAdmin, storeController.OnChangeStatusStore)
 router.post('/api/admin/store/updateProfile', AuthenticateAdmin, upload.single('image'), [
     check('storeCode').isString(),
     check('name').isString(),
@@ -101,7 +122,7 @@ router.post('/api/admin/store/updateProfile', AuthenticateAdmin, upload.single('
     check('height').isString(),
     check('bwh').isString(),
 ], storeController.OnUpdateProfile)
-router.post('/api/admin/storeProduct/Create', AuthenticateAdmin, upload.array('image'), [
+router.post('/api/admin/storeProduct/Create', AuthenticateAdmin, upload.fields([{name: 'standard', maxCount: 2}, {name: 'premium', maxCount: 2}]), [
     check('storeCode').isString(),
     check('name_member').isString(),
     check('content_member').isString(),
@@ -111,7 +132,7 @@ router.post('/api/admin/storeProduct/Create', AuthenticateAdmin, upload.array('i
     check('price_premium').isNumeric(),
     check('clip').isString(),
 ], adminStoreController.OnCreateProduct)
-router.post('/api/admin/storeProductPre/Create', AuthenticateAdmin, upload.array('image'), [
+router.post('/api/admin/storeProductPre/Create', AuthenticateAdmin, upload.fields([{name: 'premium', maxCount: 2}]), [
     check('storeCode').isString(),
     check('name_premium').isString(),
     check('content_premium').isString(),

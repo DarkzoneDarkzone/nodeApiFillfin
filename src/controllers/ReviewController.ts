@@ -7,9 +7,10 @@ export class ReviewController {
     OnGetReview = async(req: any, res: any) => {
         const finding = await Review.findAll()
         return res.status(200).json({
-            status: false,
+            status: true,
             message: 'ok',
-            description: 'get data success.'
+            description: 'get data success.',
+            review: finding
         })
     }
     OnUpdateReview = async(req: any, res: any) => {
@@ -44,5 +45,27 @@ export class ReviewController {
                 description: 'something went wrong.'
             })
         }
+    }
+    OnChangeStatusReview = async(req: any, res: any) => {
+        const errors = validationResult(req)
+        if(!errors.isEmpty()){
+            return res.status(400).json({
+                status: false,
+                message: 'error',
+                errorMessage: errors.array()
+            })
+        }
+        const finding = await Review.update(
+            {
+                display: req.body.display
+            },{
+                where: { id: req.body.id }
+            }
+        )
+        return res.status(200).json({
+            status: true,
+            message: 'ok',
+            description: 'update review success.'
+        })
     }
 }

@@ -62,6 +62,7 @@ from (
                      and package_order.status_confirm = 'confirm' 
                      and package_order.status_payment = 'confirm' 
                      and package_order.status_expire = 'no'
+                     and package_order.expire > DATE(now())
                      or members.isStore = 'yes' 
                      and package.package_id = 'PACKAGE_EXCLUSIVE' 
                      and store.gender = members.gender

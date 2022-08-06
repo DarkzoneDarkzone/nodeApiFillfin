@@ -1,12 +1,12 @@
-import { videoRouter } from './routes/videoRouter';
-import { websiteRouter } from './routes/websiteRouter';
-import { adminRouter } from './routes/adminRouter';
-import { storeRouter } from './routes/storeRouter';
 import express, { Application } from 'express'
 import { socketPort, serverPort } from './util/config'
 import * as SyncModels from './models/SyncModels'
 import path from 'path'
 import { SIO } from './util/Sockets'
+import { videoRouter } from './routes/videoRouter'
+import { websiteRouter } from './routes/websiteRouter'
+import { adminRouter } from './routes/adminRouter'
+import { storeRouter } from './routes/storeRouter'
 import { memberRouter } from './routes/memberRouter' 
 
 /* เปิด SyncModels เมื่อเปลี่ยนแปลง Database Structure */

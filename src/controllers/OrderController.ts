@@ -201,8 +201,8 @@ export class OrderController extends ViewService{
         })
     }
     OnGetOrderStore = async(req: any, res: any) => {
-        const store = req.authStore
-        const order: any = await this.query_store_order(store.store_id)
+        const store = req.authAdmin
+        const order: any = await this.query_admin_order()
         const order_response: any = order.map((data: any) => {
             const arr_product: any = []
             let product_id = data.product_id.split(',')
@@ -243,7 +243,7 @@ export class OrderController extends ViewService{
             }
         })
         return res.status(200).json({
-            status: false,
+            status: true,
             message: 'ok',
             description: 'get data success.',
             order: order_response

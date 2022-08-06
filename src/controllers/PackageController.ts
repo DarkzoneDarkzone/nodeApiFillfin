@@ -197,7 +197,8 @@ export class PackageController extends PackageService {
                 errorMessage: errors.array()
             })
         }
-        const member = await Members.findOne({where:{member_code: req.body.memberCode}})
+        const authMember = req.authMember
+        const member = await Members.findOne({where:{id: authMember.member_id}})
         if(!member){
             return res.status(404).json({
                 status: false,
@@ -206,9 +207,16 @@ export class PackageController extends PackageService {
             })
         }
         const member_package: any = await this.view_member_package(member.id, member.gender)
+        if(member_package.isStore == "yes"){
+            return res.status(400).json({
+                status: false,
+                message: 'error',
+                description: 'you are store cannot renewal.'
+            })
+        }
         const package_select = await Package.findOne({where:{package_id: member_package.package_id}})
         const begin = member_package.begin
-        const expire = moment(member_package.expire).add('days', package_select.day).format('YYYY-MM-DD HH:mm:ss')
+        const expire = moment(member_package.expire).add(package_select.day, 'days').format('YYYY-MM-DD HH:mm:ss')
         const t =  await sequelize.transaction()
         try {
             let slip = ''
@@ -391,7 +399,7 @@ export class PackageController extends PackageService {
                 description: 'member was not found.'
             })
         }
-        const payment = await PackageOrder.findOne({where:{member_id: member.id}})
+        const payment = await PackageOrder.findOne({where:{member_id: member.id, status_expire: 'no'}})
         let statusPay: any
         if(payment){
             statusPay = payment.status_payment
