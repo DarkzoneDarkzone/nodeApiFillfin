@@ -65,7 +65,7 @@ export class StoreController extends ViewService{
                     originalname += '('+i+')'
                 }
                 const image = await sharp(req.file.path)
-                .resize(200, 200)
+                .resize(500, 500)
                 .withMetadata()
                 .jpeg({ quality: 95})
                 .toFile( path.resolve(req.file.destination, originalname+ext))
@@ -228,7 +228,7 @@ export class StoreController extends ViewService{
                     originalname += '('+i+')'
                 }
                 const image = await sharp(req.file.path)
-                .resize(200, 200)
+                .resize(500, 500)
                 .withMetadata()
                 .jpeg({ quality: 95})
                 .toFile( path.resolve(req.file.destination, originalname+ext))

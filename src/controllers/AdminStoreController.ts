@@ -19,7 +19,7 @@ import path from 'path'
 import { validationResult } from 'express-validator'
 import * as jwt from 'jsonwebtoken'
 
-export class AdminStoreController {
+export class AdminStoreController extends ViewService {
     OnCreateProduct = async(req: any, res: any) => {
         const errors = validationResult(req)
         if(!errors.isEmpty()){
@@ -39,6 +39,12 @@ export class AdminStoreController {
         }
         const product_str = store_profile.id + Math.random().toString().substr(2, 10)+moment().unix();
         const product_code = await bcrypt.hash(product_str, 10);
+        const prod_most_prior = await Product.findOne({
+            where:{store_id: store_profile.id},
+            order: [
+                ['priority', 'DESC']
+            ]
+        })
         const t = await sequelize.transaction()
         try {
             const product_result = await Product.create({
@@ -54,7 +60,8 @@ export class AdminStoreController {
                 status: 'active',
                 sex: store_profile.gender,
                 clip: req.body.clip,
-                store_id: store_profile.id
+                store_id: store_profile.id,
+                priority: (prod_most_prior)?prod_most_prior.priority+1:0
             }, { transaction: t })
             let productImage: any[] = []
             let count = 0
@@ -69,7 +76,7 @@ export class AdminStoreController {
                         originalname += '('+i+')'
                     }
                     const image = await sharp(file.path)
-                    .resize(200, 200)
+                    .resize(500, 500)
                     .withMetadata()
                     .jpeg({ quality: 95})
                     .toFile( path.resolve(file.destination, originalname+ext))
@@ -103,7 +110,7 @@ export class AdminStoreController {
                         originalname += '('+i+')'
                     }
                     const image = await sharp(file.path)
-                    .resize(200, 200)
+                    .resize(500, 500)
                     .withMetadata()
                     .jpeg({ quality: 95})
                     .toFile( path.resolve(file.destination, originalname+ext))
@@ -134,6 +141,7 @@ export class AdminStoreController {
                 description: 'data was created.'
             })
         } catch(error){
+            console.log(error)
             await t.rollback()
             return res.status(500).json({
                 status: false,
@@ -161,6 +169,12 @@ export class AdminStoreController {
         }
         const product_str = store_profile.id + Math.random().toString().substr(2, 10)+moment().unix()
         const product_code = await bcrypt.hash(product_str, 10)
+        const prod_most_prior = await Product.findOne({
+            where:{store_id: store_profile.id},
+            order: [
+                ['priority', 'DESC']
+            ]
+        })
         const t = await sequelize.transaction()
         try {
             const product_result = await Product.create({
@@ -176,7 +190,9 @@ export class AdminStoreController {
                 status: 'active',
                 sex: store_profile.gender,
                 clip: req.body.clip,
-                store_id: store_profile.id
+                store_id: store_profile.id,
+                priority: (prod_most_prior)?prod_most_prior.priority+1:0
+
             }, { transaction: t })
             let productImage: any[] = []
             if(req.files.premium){
@@ -190,7 +206,7 @@ export class AdminStoreController {
                         originalname += '('+i+')'
                     }
                     const image = await sharp(file.path)
-                    .resize(200, 200)
+                    .resize(500, 500)
                     .withMetadata()
                     .jpeg({ quality: 95})
                     .toFile( path.resolve(file.destination, originalname+ext))
@@ -277,7 +293,7 @@ export class AdminStoreController {
                         originalname += '('+i+')'
                     }
                     const image = await sharp(file.path)
-                    .resize(200, 200)
+                    .resize(500, 500)
                     .withMetadata()
                     .jpeg({ quality: 95})
                     .toFile( path.resolve(file.destination, originalname+ext))
@@ -399,5 +415,76 @@ export class AdminStoreController {
                 description: 'something went wrong.'
             })
         }
+    }
+    OnGetStoreDetails = async(req: any, res: any) => {
+        const adminToken = req.adminToken
+        const store = await Store.findOne({
+            where:{store_code: req.params.code},
+            attributes: {
+                exclude: ['createdAt', 'updatedAt', 'access_token', 'refresh_token']
+            },
+        })
+        if(!store){
+            return res.status(404).json({
+                status: false,
+                message: 'error',
+                description: 'store was not found.'
+            })
+        }
+        const product = await ViewProduct.findAll({
+            where:{
+                package_id: "PACKAGE_EXCLUSIVE",
+                store_id: store.id,
+                status: 'active'
+            },
+            attributes: ['product_code', 'name_member', 'content_member', 'name_premium', 'content_premium', 'price_standard', 'price_premium', 'recommend', 'pre_order',
+                        'status', 'sex', 'clip', 'store_id', 'path_img', 'package_id', 'buy_limit', 'show_gift', 'price_sell', 'createdAt',
+                [sequelize.fn('GROUP_CONCAT', sequelize.col('path_img')), 'product_img']
+            ],
+            group: ['store_id', 'id'],
+            order: [
+                ['createdAt', 'DESC']
+            ]
+        })
+        const review = await Review.findAll({
+            where:{store_id: store.id},
+            order: [
+                ['createdAt', 'DESC']
+            ]
+        })
+        const store_post = await this.query_store_post(store.id)
+        let arr_product: any[] = []
+        let arr_product_pre: any[] = []
+        product.forEach((data: any) => {
+            const arr_data = {
+                product_code: data.product_code,
+                name: data.name_premium,
+                content_product: data.content_premium,
+                price: data.price_premium,
+                recommend: data.recommend,
+                sex: data.sex,
+                clip: data.clip,
+                show_gift: data.show_gift,
+                preOrder: data.pre_order,
+                product_img: data.product_img,
+            }
+            if(data.pre_order == "no"){
+                arr_product.push(arr_data)
+            } else {
+                arr_product_pre.push(arr_data)
+            }
+        })
+        return res.status(200).json({
+            status: true,
+            message: 'ok',
+            description: 'get data success.',
+            data: {
+                store_detail: store,
+                all_product: arr_product,
+                pre_order: arr_product_pre,
+                store_post: store_post,
+                review: review
+            }
+        })
     }
 }

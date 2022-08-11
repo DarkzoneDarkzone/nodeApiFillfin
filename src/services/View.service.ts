@@ -38,7 +38,7 @@ export class ViewService extends DBconnect {
                         FROM store
                         JOIN post ON (store.id = post.store_id AND post.status = "active")
                     ) as store_post 
-                    JOIN post_image ON (post_image.post_id = store_post.id)
+                    LEFT JOIN post_image ON (post_image.post_id = store_post.id)
                     GROUP BY store_post.id
                 ) as posts
                 WHERE posts.store_id = ?

@@ -61,7 +61,7 @@ export class UserController {
                     originalname += '('+i+')'
                 }
                 const image = await sharp(req.file.path)
-                .resize(200, 200)
+                .resize(500, 500)
                 .withMetadata()
                 .jpeg({ quality: 95})
                 .toFile( path.resolve(req.file.destination, originalname+ext))
@@ -136,7 +136,7 @@ export class UserController {
             const refresh_token = jwt.sign({
                 username: finding.username,
                 gender: finding.gender,
-                section: 'store',
+                section: 'admin',
                 at: new Date().getTime(),
                 token: access_token
             }, `${Config.secretKey}`)
@@ -248,7 +248,7 @@ export class UserController {
         }
     }
     OnUploadVideoStore = async(req: any, res: any) => {
-        const store = await Store.findOne({where:{id: req.body.storeId}})
+        const store = await Store.findOne({where:{store_code: req.body.storeCode}})
         if(!store){
             return res.status(404).json({
                 status: false,
@@ -376,7 +376,7 @@ export class UserController {
         try {
             /* generate new access_token */
             const access_token = jwt.sign({
-                user_id: finding.users_code,
+                user_id: finding.id,
                 section: 'admin',
                 username: finding.username,
                 at: new Date().getTime()

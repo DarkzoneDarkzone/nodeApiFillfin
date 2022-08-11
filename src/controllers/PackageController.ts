@@ -142,7 +142,7 @@ export class PackageController extends PackageService {
                     originalname += '('+i+')'
                 }
                 const image = await sharp(req.file.path)
-                .resize(200, 200)
+                .resize(500, 500)
                 .withMetadata()
                 .jpeg({ quality: 95})
                 .toFile( path.resolve(req.file.destination, originalname+ext))
@@ -230,7 +230,7 @@ export class PackageController extends PackageService {
                     originalname += '('+i+')'
                 }
                 const image = await sharp(req.file.path)
-                .resize(200, 200)
+                .resize(500, 500)
                 .withMetadata()
                 .jpeg({ quality: 95})
                 .toFile( path.resolve(req.file.destination, originalname+ext))
@@ -294,7 +294,21 @@ export class PackageController extends PackageService {
             })
         }
         const payment = await PackagePayment.findOne({where:{package_order_id: req.params.paymentId}})
-        const order = await PackageOrder.findOne({where:{package_order_id: req.params.paymentId}})
+        if(!payment){
+            return res.status(404).json({
+            status: false,
+            message: 'error',
+            description: 'data was not found.'
+            })   
+        }
+        const order = await PackageOrder.findOne({where:{pack_order_id: req.params.paymentId}})
+        if(!order){
+            return res.status(404).json({
+                status: false,
+                message: 'error',
+                description: 'data was not found.'
+            })
+        }
         const package_select = await Package.findOne({where:{package_id: order.package_id}})
         const begin = moment().format('YYYY-MM-DD HH:mm:ss')
         const expire = moment(begin).add(package_select.day, 'days').format('YYYY-MM-DD HH:mm:ss')
@@ -307,7 +321,7 @@ export class PackageController extends PackageService {
             order.status_expire = "no"
             order.status_confirm = "confirm"
             order.status_payment = "confirm"
-            order.save
+            order.save()
             return res.status(200).json({
                 status: true,
                 message: 'ok',
@@ -358,7 +372,7 @@ export class PackageController extends PackageService {
                     originalname += '('+i+')'
                 }
                 const image = await sharp(req.file.path)
-                .resize(200, 200)
+                .resize(500, 500)
                 .withMetadata()
                 .jpeg({ quality: 95})
                 .toFile( path.resolve(req.file.destination, originalname+ext))

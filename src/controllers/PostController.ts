@@ -21,17 +21,9 @@ export class PostController extends ViewService{
                 errorMessage: errors.array()
             })
         }
-        const storeToken = req.authStore
-        if(!storeToken){
-            return res.status(401).json({
-                status: false,
-                message: 'error',
-                description: 'not authenticated.'
-            })
-        }
-        const store = await Store.findOne({where:{store_code: storeToken.store_code}})
+        const store = await Store.findOne({where:{store_code: req.body.storeCode}})
         const all_post = await Post.findAll({where:{store_id: store.id, status: 'active'}})
-        if(all_post.length > 10){
+        if(all_post.length >= 10){
             return res.status(400).json({
                 status: false,
                 message: 'error',
@@ -62,7 +54,7 @@ export class PostController extends ViewService{
                         originalname += '('+i+')'
                     }
                     const image = await sharp(file.path)
-                    .resize(200, 200)
+                    .resize(500, 500)
                     .withMetadata()
                     .jpeg({ quality: 95})
                     .toFile( path.resolve(file.destination, originalname+ext))
@@ -81,8 +73,8 @@ export class PostController extends ViewService{
                     }
                     postImage.push(arr)
                 }
+                const post_image = await PostImage.bulkCreate(postImage, { transaction : t})
             }
-            const post_image = await PostImage.bulkCreate(postImage, { transaction : t})
             await t.commit()
             return res.status(201).json({
                 status: true,

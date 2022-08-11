@@ -293,7 +293,7 @@ export class ProductController extends ViewService {
                         originalname += '('+i+')'
                     }
                     const image = await sharp(file.path)
-                    .resize(200, 200)
+                    .resize(500, 500)
                     .withMetadata()
                     .jpeg({ quality: 95})
                     .toFile( path.resolve(file.destination, originalname+ext))
@@ -327,7 +327,7 @@ export class ProductController extends ViewService {
                         originalname += '('+i+')'
                     }
                     const image = await sharp(file.path)
-                    .resize(200, 200)
+                    .resize(500, 500)
                     .withMetadata()
                     .jpeg({ quality: 95})
                     .toFile( path.resolve(file.destination, originalname+ext))
@@ -415,7 +415,7 @@ export class ProductController extends ViewService {
                         originalname += '('+i+')'
                     }
                     const image = await sharp(file.path)
-                    .resize(200, 200)
+                    .resize(500, 500)
                     .withMetadata()
                     .jpeg({ quality: 95})
                     .toFile( path.resolve(file.destination, originalname+ext))

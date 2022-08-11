@@ -95,7 +95,7 @@ router.post('/api/admin/review/update', AuthenticateAdmin, [
 ], reviewController.OnUpdateReview)
 /**for upload video */
 router.post('/api/admin/store/videoUpload', upload.single('video'), AuthenticateAdmin, [
-    check('storeId').isNumeric().notEmpty()
+    check('storeCode').isNumeric().notEmpty()
 ], userController.OnUploadVideoStore)
 router.get('/api/admin/content/get', AuthenticateAdmin, userController.OnGetContent)
 router.post('/api/admin/content/update', [
@@ -113,6 +113,7 @@ router.post('/api/admin/changeStatusContent', [
 ], AuthenticateAdmin, userController.OnChangeStatusContent)
 /** for manage store */
 router.get('/api/admin/store/get', AuthenticateAdmin, storeController.OnGetStoreAll)
+router.get('/api/admin/store/getDetails/:code', AuthenticateAdmin, adminStoreController.OnGetStoreDetails)
 router.post('/api/admin/store/changeStatusStore', AuthenticateAdmin, storeController.OnChangeStatusStore)
 router.post('/api/admin/store/updateProfile', AuthenticateAdmin, upload.single('image'), [
     check('storeCode').isString(),
@@ -141,7 +142,6 @@ router.post('/api/admin/storeProductPre/Create', AuthenticateAdmin, upload.field
 ], adminStoreController.OnCreateProductPre)
 router.post('/api/admin/storePost/create', AuthenticateAdmin, upload.array('image'), [
     check('storeCode').isString(),
-    check('caption').notEmpty().isString()
 ], postController.OnCreatePost)
 router.get('/api/admin/storePost/delete/:code', AuthenticateAdmin, postController.OnDeletePost)
 router.get('/api/admin/storeProduct/delete/:code', AuthenticateAdmin, productController.OnDeleteProduct)
