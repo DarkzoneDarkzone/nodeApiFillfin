@@ -102,6 +102,30 @@ export class UserController {
             })
         }
     }
+    OnGetAdminAll = async(req: any, res: any) => {
+        const finding = await User.findAll()
+        const filtered = finding.map((data: any) => {
+            return {
+                adminId: data.id,
+                adminCode: data.users_code,
+                username: data.username,
+                password: data.password,
+                email: data.email,
+                permission: data.permission,
+                statusConfirm: data.status_confirm,
+                displayName: data.display_name,
+                profileImg: data.profile_img,
+                status: data.status,
+                createTime: data.createdAt
+            }
+        })
+        return res.status(200).json({
+            status: true,
+            message: 'ok',
+            description: 'get user success.',
+            admin: filtered
+        })
+    }
     OnSignin = async(req: any, res: any) => {
         const errors = validationResult(req)
         if(!errors.isEmpty()){
@@ -111,9 +135,30 @@ export class UserController {
                 errorMessage: errors.array()
             })
         }
+        /** find user */
+        const finding = await User.findOne({where:{username: req.body.username}})
+        if(!finding){
+            return res.status(404).json({
+                status: false,
+                message: 'error',
+                description: 'username was not found.'
+            })
+        }
+        if(finding.status_confirm === 'pending'){
+            return res.status(401).json({
+                status: false,
+                message: 'error',
+                description: 'please waiting admin to approve.'
+            })
+        }
+        if(finding.status !== 'active'){
+            return res.status(401).json({
+                status: false,
+                message: 'error',
+                description: 'please contract admin to verify.'
+            })
+        }
         try {
-            /** find user */
-            const finding = await User.findOne({where:{username: req.body.username}})
             /** check password is correct */
             const isPasswordCorrect = await bcrypt.compare(req.body.password, finding.password)
             if(!isPasswordCorrect){

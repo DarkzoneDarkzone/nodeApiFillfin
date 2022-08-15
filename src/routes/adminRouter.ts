@@ -1,3 +1,4 @@
+import { ReportController } from './../controllers/ReportController';
 import { ProductController } from './../controllers/ProductController';
 import { PostController } from './../controllers/PostController';
 import { AdminStoreController } from './../controllers/AdminStoreController';
@@ -25,8 +26,10 @@ const reviewController = new ReviewController()
 const adminStoreController = new AdminStoreController()
 const postController = new PostController()
 const productController = new ProductController()
+const reportController = new ReportController()
 
 /** for authenticate */
+router.get('/api/admin/get', AuthenticateAdmin, userController.OnGetAdminAll)
 router.post('/api/admin/register', upload.single('image'), [
     check('username').isString(),
     check('password').isString(),
@@ -157,5 +160,14 @@ router.post('/api/admin/storeProduct/setPriority', AuthenticateAdmin, [
     check('productCode').isString().notEmpty(),
     check('priority').isNumeric().notEmpty(),
 ], adminStoreController.OnSetProductPriority)
+/** for report */
+router.post('/api/admin/storeReport/export', AuthenticateAdmin, [
+    check('start'),
+    check('end')
+], reportController.OnExportStore)
+router.post('/api/admin/storeReport/get', AuthenticateAdmin, [
+    check('start'),
+    check('end')
+], reportController.OnGetStoreReport)
 
 export const adminRouter = router

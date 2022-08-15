@@ -10,7 +10,7 @@ export class ReviewController {
             status: true,
             message: 'ok',
             description: 'get data success.',
-            review: finding
+            reviews: finding
         })
     }
     OnUpdateReview = async(req: any, res: any) => {
