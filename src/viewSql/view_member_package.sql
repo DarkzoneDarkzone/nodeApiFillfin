@@ -13,7 +13,8 @@ select current.pack_id AS pack_id,
        current.show_img_limit AS show_img_limit,
        current.show_gift AS show_gift,
        current.store_detail_limit AS store_detail_limit,
-       current.price_sell AS price_sell
+       current.price_sell AS price_sell,
+       current.gross_profit
 from (
        select current_pack.pack_id AS pack_id,
               current_pack.package_id AS package_id,
@@ -26,6 +27,7 @@ from (
               current_pack.premium,
               current_pack.begin,
               current_pack.expire,
+    		  current_pack.gross_profit,
               current_pack.status_expire,
               package_status.buy_limit AS buy_limit,
               package_status.show_img_limit AS show_img_limit,
@@ -37,6 +39,7 @@ from (
               (select package.pack_id AS pack_id,
                      package.package_id AS package_id,
                      package.name AS name,
+                     package.gross_profit,
                      package.premium,
                      members.id AS mem_id,
                      members.username AS username,
@@ -70,4 +73,4 @@ from (
        join package_status 
        on(current_pack.package_id = package_status.package_id)
        )
-) current group by current.mem_id,current.member_gender;
+) as current group by current.mem_id,current.member_gender;

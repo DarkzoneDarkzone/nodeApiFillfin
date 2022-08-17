@@ -1,3 +1,5 @@
+import { Settings } from './../models/settings';
+import { Website } from './../models/website';
 import { Review } from './../models/review'
 import { OrdersCart } from './../models/ordersCart'
 import { Product } from './../models/product'
@@ -30,14 +32,18 @@ export class OrderController extends ViewService{
         }
         const member = req.authMember
         const t = await sequelize.transaction()
+        const packages: any = await this.view_member_package(member.member_id, member.gender)
         const order_number: string = "OD-"+moment().unix()+Math.floor((Math.random() * 100) + 1).toString().padStart(3, "0")
         const order_product: any = await this.query_product_incart(member.member_id)
+        const gp_recommend: any = await Settings.findOne({where:{setting_name: 'gross_profit'}})
         let missingProduct: any[] = []
         let orderProduct: any[] = []
         let arrProductId: any[] = []
+        let totalPrice: number = 0
+        let netPrice: number = 0
         for await (const data of order_product) {
             const prod = await Product.findOne({where:{product_code: data.product_code}})
-            if(prod.status != 'active'){
+            if(prod.status!=='active'){
                 await OrdersCart.destroy({where:{productId: prod.id,memberId: member.member_id}})
                 const res_data = {
                     name_product: (data.status_premium=='yes')?data.name_premium:data.name_member,
@@ -50,13 +56,16 @@ export class OrderController extends ViewService{
                     product_name: (data.status_premium=='yes')?data.name_premium:data.name_member,
                     status: 'pending',
                     product_content: (data.status_premium=='yes')?data.content_premium:data.content_member,
+                    gross_profit: (data.recommend==='yes')?parseInt(gp_recommend.value):parseInt(packages.gross_profit),
                     price: (data.status_premium=='yes')?data.price_premium:data.price_standard
                 }
+                totalPrice += order_data.price
+                netPrice += order_data.price * (1 - order_data.gross_profit / 100)
                 arrProductId.push(prod.id)
                 orderProduct.push(order_data)
             }
         }
-        if(missingProduct.length != 0){
+        if(missingProduct.length!==0){
             return res.status(400).json({
                 status: false,
                 message: 'error',
@@ -64,7 +73,7 @@ export class OrderController extends ViewService{
                 data: missingProduct
             })
         }
-        if(orderProduct.length == 0){
+        if(orderProduct.length===0){
             return res.status(400).json({
                 status: false,
                 message: 'error',
@@ -98,19 +107,14 @@ export class OrderController extends ViewService{
                 slip = image
             }
             const order_pro = await OrdersProduct.bulkCreate(orderProduct)
-            const update_product = await Product.update({status: 'sold'},
-            {where:{
-                    id:{
-                        [Op.in]: arrProductId
-                    }
-            }}, { transaction: t })
+            const update_product = await Product.update({status: 'sold'},{where:{id:{[Op.in]: arrProductId}}}, { transaction: t })
             const ord_delete = await OrdersCart.destroy({where:{memberId: member.member_id}}, { transaction :t })
             const order = await Orders.create({
                 order_number: order_number,
                 payment_status: 'pending',
                 status: 'pending',
-                totalprice: parseInt(req.body.totalprice),
-                netprice: parseInt(req.body.netprice),
+                totalprice: totalPrice,
+                netprice: netPrice,
                 member_id: member.member_id,
             }, { transaction: t })
             const order_address = await OrdersAddress.create({
@@ -313,5 +317,166 @@ export class OrderController extends ViewService{
                 description: 'something went wrong.'
             })
         }
+    }
+    OnUpdatePaymentStatus = async(req: any, res: any) => {
+        const errors = validationResult(req)
+        if(!errors.isEmpty()){
+            return res.status(400).json({
+                status: false,
+                message: 'error',
+                errorMessage: errors.array()
+            })
+        }
+        try {
+            const finding = await Orders.fidnOne({where: {order_number: req.body.orderNumber}})
+            if(!finding){
+                return res.status(404).json({
+                    status: false,
+                    message: 'error',
+                    description: 'order was not found.'
+                })
+            }
+            finding.payment_status = req.body.status
+            finding.save()
+            return res.status(200).json({
+                status: true,
+                message: 'ok',
+                description: 'payment status was updated.'
+            })
+        } catch(error){
+            return res.status(500).json({
+                status: false,
+                message: 'error',
+                description: 'something went wrong.'
+            })
+        }
+    }
+    OnUpdateStatus = async(req: any, res: any) => {
+        const errors = validationResult(req)
+        if(!errors.isEmpty()){
+            return res.status(400).json({
+                status: false,
+                message: 'error',
+                errorMessage: errors.array()
+            })
+        }
+        try {
+            const finding = await Orders.findOne({where: {order_number: req.body.orderNumber}})
+            if(!finding){
+                return res.status(404).json({
+                    status: false,
+                    message: 'error',
+                    description: 'order was not found.'
+                })
+            }
+            finding.status = req.body.status
+            finding.message = req.body.message
+            finding.save()
+            return res.status(200).json({
+                status: true,
+                message: 'ok',
+                description: 'order status was updated.'
+            })
+        } catch(error){
+            return res.status(500).json({
+                status: false,
+                message: 'error',
+                description: 'something went wrong.'
+            })
+        }
+    }
+    OnUpdateProductStatus = async(req: any, res: any) => {
+        const errors = validationResult(req)
+        if(!errors.isEmpty()){
+            return res.status(400).json({
+                status: false,
+                message: 'error',
+                errorMessage: errors.array()
+            })
+        }
+        try {
+            const finding = await OrdersProduct.fidnOne({where: {order_number: req.body.orderNumber, product_id: req.body.productId}})
+            if(!finding){
+                return res.status(404).json({
+                    status: false,
+                    message: 'error',
+                    description: 'product was not found.'
+                })
+            }
+            finding.status = req.body.status
+            finding.save()
+            return res.status(200).json({
+                status: true,
+                message: 'ok',
+                description: 'product status was updated.'
+            })
+        } catch(error){
+            return res.status(500).json({
+                status: false,
+                message: 'error',
+                description: 'something went wrong.'
+            })
+        }
+    }
+    OnUpdateGPInOrder = async(req: any, res: any) => {
+        const errors = validationResult(req)
+        if(!errors.isEmpty()){
+            return res.status(400).json({
+                status: false,
+                message: 'error',
+                errorMessage: errors.array()
+            })
+        }
+        const productForSet = await OrdersProduct.findOne({where: {order_number: req.body.orderNumber, product_id: req.body.productId}})
+        const productAllInOrder: any = await OrdersProduct.findAll({where: {order_number: req.body.orderNumber}})
+        const orders = await Orders.findOne({where:{order_number: req.body.orderNumber}})
+        if(!productForSet || !orders){
+            return res.status(404).json({
+                status: false,
+                message: 'error',
+                description: 'order was not found.'
+            })
+        }
+        try {
+            let totalPrice: number = 0
+            let netPrice: number = 0
+            productAllInOrder.forEach((data: any) => {
+                totalPrice += data.price
+                netPrice += data.price * (1 - data.gross_profit / 100)
+            });
+            productForSet.gross_profit = parseInt(req.body.gp)
+            productForSet.save()
+            orders.totalprice = totalPrice
+            orders.netprice = netPrice
+            orders.save()
+            return res.status(200).json({
+                status: true,
+                message: 'ok',
+                description: 'order GP was updated.'
+            })
+        } catch(error){
+            return res.status(500).json({
+                status: false,
+                message: 'error',
+                description: 'something went wrong.'
+            })
+        }
+    }
+    OnReadOrder = async(req: any, res: any) => {
+        const finding = await Orders.findOne({where: {order_number: req.params.number}})
+        if(!finding){
+            return res.status(404).json({
+                status: false,
+                message: 'error',
+                description: 'order was not found.'
+            })
+        }
+        finding.isRead = true
+        finding.save()
+        return res.status(200).json({
+            status: true,
+            message: 'ok',
+            description: 'order was readed.'
+        })
     }
 }

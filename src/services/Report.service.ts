@@ -5,7 +5,7 @@ export class ReportService extends DBconnect {
     constructor() {
         super()
     }
-    queryReportStore = async(start: any = "", end: any = new Date()) => {
+    queryReportStore = async(start: any, end: any) => {
         sql = ` SELECT  store.name as storeName, 
                         store.gender, 
                         reportShop.* 
@@ -43,7 +43,68 @@ export class ReportService extends DBconnect {
                             ) as orderss ON (view_member_package.mem_id = orderss.member_id)
                 ) as reportShop
                 ON (store.id = reportShop.store_id)
-                where reportShop.createdAt > ? AND reportShop.createdAt < ?`
+                where (reportShop.createdAt > ? AND reportShop.createdAt < ?) OR (reportShop.createdAt IS NULL)`
+        return this.findAll(sql, [start, end])
+    }
+    queryReportCustomer = async(start: any, end: any) => {
+        sql =  `SELECT  memberCurrent.*, 
+                        orders.priceTotal, 
+                        packageOrder.totalPackage
+                FROM (
+                    SELECT member.id,
+                        member.username,
+                        view_member_package.name as packageLevel,
+                        view_member_package.begin as packageBegin,
+                        member.createdAt as registerDate,
+                        member.note
+                    FROM (
+                        SELECT * FROM members 
+                        WHERE members.isStore = "no"
+                    ) as member 
+                    LEFT JOIN view_member_package 
+                    ON (member.id = view_member_package.mem_id)
+                ) as memberCurrent 
+                LEFT JOIN (
+                        SELECT orders.*, 
+                                SUM(orders.netprice) as priceTotal 
+                        FROM orders 
+                        WHERE (orders.status = "success" AND orders.payment_status = "confirm")
+                        GROUP BY orders.member_id
+                ) as orders
+                ON (memberCurrent.id = orders.member_id)
+                LEFT JOIN (
+                        SELECT package_order.member_id, 
+                                COUNT(package_order.member_id) as totalPackage 
+                        FROM package_order 
+                        WHERE (package_order.status_confirm = "confirm" AND package_order.status_payment = "confirm") 
+                        GROUP BY (package_order.member_id)
+                ) as packageOrder
+                ON (memberCurrent.id = packageOrder.member_id)
+                where (memberCurrent.registerDate > ? AND memberCurrent.registerDate < ?)`
+        return this.findAll(sql, [start, end])
+    }
+    queryReportOrder = async(start: any, end: any) => {
+        sql = `SELECT orders.order_number, 
+                    orders_address.name,
+                    orders_address.address,
+                    orders_address.district,
+                    orders_address.subdistrict,
+                    orders_address.province,
+                    orders_address.code,
+                    orders_address.phone,
+                    orders.totalprice, 
+                    orders.netprice,
+                    orders_payment.slip,
+                    orders_address.note,
+                    orders.payment_status, 
+                    orders.status,
+                    orders.createdAt
+                FROM orders 
+                JOIN orders_address 
+                ON (orders.order_number = orders_address.order_number)
+                JOIN orders_payment 
+                ON (orders.order_number = orders_payment.order_number AND orders_payment.status_confirm = "confirm")
+                WHERE (orders.createdAt > ? AND orders.createdAt < ?)`
         return this.findAll(sql, [start, end])
     }
 }

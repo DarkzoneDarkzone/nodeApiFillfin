@@ -68,4 +68,20 @@ export class ReviewController {
             description: 'update review success.'
         })
     }
+    OnDeleteReview = async(req: any, res: any) => {
+        const finding = await Review.findOne({where:{id: req.params.id}})
+        if(!finding){
+            return res.status(404).json({
+                status: false,
+                message: 'error',
+                description: 'review was not found.'
+            })
+        }
+        finding.destroy()
+        return res.status(200).json({
+            status: true,
+            message: 'ok',
+            description: 'review was deleted.'
+        })
+    }
 }

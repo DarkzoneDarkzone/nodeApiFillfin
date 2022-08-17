@@ -60,8 +60,6 @@ router.get('/api/member/cart/delete/:code', AuthenticateMember, cartController.O
 router.get('/api/member/cart/get', AuthenticateMember, cartController.OnGetProductInCart)
 router.get('/api/member/cart/checkProduct', AuthenticateMember, cartController.OnCheckProductInCart)
 router.post('/api/member/createOrder', upload.single('image'), [
-    check('totalprice').notEmpty().isNumeric(),
-    check('netprice').notEmpty().isNumeric(),
     check('name').notEmpty().isString(),
     check('address').notEmpty().isString(),
     check('phone').notEmpty().isString(),
@@ -70,13 +68,13 @@ router.post('/api/member/createOrder', upload.single('image'), [
     check('province').notEmpty().isString(),
     check('code').notEmpty().isString(),
     check('note').notEmpty().isString(),
-    check('bank_ref').notEmpty().isNumeric(),
+    check('bank_ref').notEmpty().isNumeric()
 ], AuthenticateMember, orderController.OnCreateOrder)
 router.post('/api/member/order/review', AuthenticateMember, [
     check('message').isString().notEmpty(),
     check('orderNumber').isString().notEmpty(),
     check('productId').isNumeric().notEmpty(),
-    check('star').isNumeric().notEmpty(),
+    check('star').isNumeric().notEmpty()
 ], orderController.OnReview)
 router.get('/api/member/getOrder', AuthenticateMember, orderController.OnGetOrderMember)
 router.get('/api/bank/get', bankController.OnGetBankAll)

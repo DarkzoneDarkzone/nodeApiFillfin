@@ -35,7 +35,7 @@ export class ProductController extends ViewService {
                 package_member = member_package.package_id
             }
         }
-        const product_store: any = await ViewProductAllStore.findAndCountAll({where:{sex: gender,store_name:{[Op.substring]:store_name}},offset: offset,limit: limit})
+        const product_store: any = await ViewProductAllStore.findAndCountAll({where:{sex: gender, storeStatus: 'active', store_name:{[Op.substring]:store_name}},offset: offset,limit: limit})
         const product_recom: any = await this.query_product_recommend(package_member, gender)
         const filter_product_store = product_store.rows.map((data: any) => {
             return {
@@ -119,7 +119,8 @@ export class ProductController extends ViewService {
                 package_id: package_member,
                 sex: gender,
                 store_id: store.id,
-                pre_order: "no"
+                pre_order: "no",
+                status: 'active'
             },
             attributes: ['product_code', 'name_member', 'content_member', 'name_premium', 'content_premium', 'price_standard', 'price_premium', 'recommend', 'pre_order',
                         'status', 'sex', 'clip', 'store_id', 'path_img', 'package_id', 'buy_limit', 'show_gift', 'price_sell', 'status_premium',

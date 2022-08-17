@@ -13,6 +13,7 @@ import { BankController } from '../controllers/BankController'
 import { MembersController } from '../controllers/MembersController' 
 import { OrderController } from '../controllers/OrderController' 
 import { ReviewController } from '../controllers/ReviewController'
+import { AdminManageController } from '../controllers/AdminManageController'
 
 const upload = multerUpload.uploadImage()
 const router = Router()
@@ -27,6 +28,7 @@ const adminStoreController = new AdminStoreController()
 const postController = new PostController()
 const productController = new ProductController()
 const reportController = new ReportController()
+const adminManageController = new AdminManageController()
 
 /** for authenticate */
 router.get('/api/admin/get', AuthenticateAdmin, userController.OnGetAdminAll)
@@ -40,6 +42,10 @@ router.post('/api/admin/signin', [
     check('username').isString(),
     check('password').isString()
 ], userController.OnSignin)
+router.post('/api/admin/changePassword', [
+    check('adminCode').isString(),
+    check('newPassword').isString()
+], AuthenticateAdmin, adminManageController.OnChangePasswordAdmin)
 router.post('/api/admin/update', upload.single('image'), AuthenticateAdmin, [
     check('adminCode').isString(),
     check('email').isString(),
@@ -72,12 +78,21 @@ router.post('/api/admin/bank/update', AuthenticateAdmin, [
     check('bank_id').isNumeric(),
     check('bank_provider_id').isNumeric(),
 ], bankController.OnUpdateBankAccount)
-/** */
+/** for manage member */
 router.get('/api/admin/member/get', AuthenticateAdmin, membersController.OnGetAll)
-router.get('/api/admin/orders/get', AuthenticateAdmin, orderController.OnGetOrderStore)
+router.post('/api/admin/member/changePassword', [
+    check('memberCode').isString(),
+    check('newPassword').isString()
+], AuthenticateAdmin, adminManageController.OnChangePasswordMember)
+router.post('/api/admin/member/changeStatus', [
+    check('memberCode').isString(),
+    check('status').isString()
+], AuthenticateAdmin, membersController.OnChangeStatus)
+router.get('/api/admin/member/delete/:code', AuthenticateAdmin, membersController.OnDeleteMember)
 /** for manage package */
 router.get('/api/admin/package/get', AuthenticateAdmin, packageController.OnGetPackageAll)
 router.post('/api/admin/package/update', upload.single('image'), AuthenticateAdmin, [
+    check('packageId').notEmpty(),
     check('day').isNumeric().notEmpty(),
     check('content').isString().notEmpty(),
     check('price').isNumeric().notEmpty(),
@@ -96,6 +111,7 @@ router.post('/api/admin/review/update', AuthenticateAdmin, [
     check('review_id').isNumeric(),
     check('display').isString()
 ], reviewController.OnUpdateReview)
+router.get('/api/admin/review/delete/:id', AuthenticateAdmin, reviewController.OnDeleteReview)
 /**for upload video */
 router.post('/api/admin/store/videoUpload', upload.single('video'), AuthenticateAdmin, [
     check('storeCode').isNumeric().notEmpty()
@@ -160,14 +176,60 @@ router.post('/api/admin/storeProduct/setPriority', AuthenticateAdmin, [
     check('productCode').isString().notEmpty(),
     check('priority').isNumeric().notEmpty(),
 ], adminStoreController.OnSetProductPriority)
+router.post('/api/admin/store/changePassword', [
+    check('storeCode').isString(),
+    check('newPassword').isString()
+], AuthenticateAdmin, adminManageController.OnChangePasswordStore)
+/** for order */
+router.get('/api/admin/orders/read/:number', AuthenticateAdmin, orderController.OnReadOrder)
+router.get('/api/admin/orders/get', AuthenticateAdmin, orderController.OnGetOrderStore)
+router.post('/api/admin/orders/updatePaymentStatus', [
+    check('orderNumber').isString(),
+    check('status').isString()
+], AuthenticateAdmin, orderController.OnUpdatePaymentStatus)
+router.post('/api/admin/orders/updateStatus', [
+    check('orderNumber').isString(),
+    check('status').isString(),
+    check('message').isString(),
+], AuthenticateAdmin, orderController.OnUpdateStatus)
+router.post('/api/admin/orders/updateProductStatus', [
+    check('orderNumber').isString(),
+    check('productId').isNumeric(),
+    check('status').isString(),
+], AuthenticateAdmin, orderController.OnUpdateProductStatus)
+router.post('/api/admin/orders/updateGpProduct', [
+    check('orderNumber').isString(),
+    check('productId').isNumeric(),
+    check('gp').isNumeric(),
+], AuthenticateAdmin, orderController.OnUpdateGPInOrder)
 /** for report */
 router.post('/api/admin/storeReport/export', AuthenticateAdmin, [
     check('start'),
     check('end')
-], reportController.OnExportStore)
+], reportController.OnExportStoreReport)
 router.post('/api/admin/storeReport/get', AuthenticateAdmin, [
     check('start'),
     check('end')
 ], reportController.OnGetStoreReport)
+router.post('/api/admin/customerReport/export', AuthenticateAdmin, [
+    check('start'),
+    check('end')
+], reportController.OnExportCustomerReport)
+router.post('/api/admin/customerReport/get', AuthenticateAdmin, [
+    check('start'),
+    check('end')
+], reportController.OnGetCustomerReport)
+router.post('/api/admin/orderReport/export', AuthenticateAdmin, [
+    check('start'),
+    check('end')
+], reportController.OnExportOrderReport)
+router.post('/api/admin/orderReport/get', AuthenticateAdmin, [
+    check('start'),
+    check('end')
+], reportController.OnGetOrderReport)
+/** for settings */
+router.post('/api/admin/setGrossProfit', [
+    check('gp').notEmpty().isString()
+],AuthenticateAdmin, adminManageController.OnSetGrossProfit)
 
 export const adminRouter = router

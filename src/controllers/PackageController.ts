@@ -17,11 +17,12 @@ export class PackageController extends PackageService {
         let arr_package: any[] = []
         finding.forEach((data: any) => {
             const newArr = {
-                package_id: data.package_id,
+                package_id: data.pack_id,
                 name: data.name,
                 image: data.image,
                 content: data.content,
                 price: data.price,
+                grossProfit: data.gross_profit,
                 day: data.day,
                 gender: data.gender,
             }
@@ -353,7 +354,7 @@ export class PackageController extends PackageService {
                 errorMessage: errors.array()
             })
         }
-        const package_result = await Package.findOne({where:{pack_id: req.body.package_id}})
+        const package_result = await Package.findOne({where:{pack_id: req.body.packageId}})
         if(!package_result){
             return res.status(404).json({
                 status: false,

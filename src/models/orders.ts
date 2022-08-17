@@ -32,6 +32,14 @@ export const Orders = sequelize.define('Orders',
         type: DataTypes.INTEGER,
         allowNull: false,
     },
+    message: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+    },
+    isRead: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+    },
 }, {
     sequelize,
     tableName: 'orders',

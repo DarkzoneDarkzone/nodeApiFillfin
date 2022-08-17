@@ -1,3 +1,4 @@
+import { Settings } from './settings';
 import { TokenLog } from './tokenLog';
 import { Log } from './log';
 import { Banner } from './banner';
@@ -51,7 +52,8 @@ export function OnInit(){
         Ads,
         Banner,
         Log,
-        TokenLog
+        TokenLog,
+        Settings
     }
     sequelize.sync(); 
 }

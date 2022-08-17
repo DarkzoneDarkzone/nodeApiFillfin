@@ -36,6 +36,14 @@ export const Members = sequelize.define('Members',
         type: DataTypes.STRING(10),
         allowNull: false,
     },
+    note: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+    },
+    statusMember: {
+        type: DataTypes.STRING(20),
+        allowNull: false,
+    },
 }, {
     sequelize,
     tableName: 'members',

@@ -10,6 +10,7 @@ import moment from 'moment'
 import bcrypt from 'bcrypt'
 import { validationResult } from 'express-validator'
 import { Log } from '../models/log';
+import { transformArguments } from '@redis/search/dist/commands/AGGREGATE';
 
 export class MembersController extends ViewService {
     OnGetAll = async(req: any, res: any) => {
@@ -151,7 +152,8 @@ export class MembersController extends ViewService {
                 username: req.body.username,
                 gender: req.body.gender,
                 password: req.body.password,
-                isStore: 'no'
+                isStore: 'no',
+                statusMember: 'active'
             }, { transaction: t })
             await t.commit()
             return res.status(201).json({
@@ -270,6 +272,63 @@ export class MembersController extends ViewService {
                 status: false,
                 message:'error',
                 description: "authentication failed, token was expired!"
+            })
+        }
+    }
+    OnChangeStatus = async(req: any, res: any) => {
+        const errors = validationResult(req)
+        if(!errors.isEmpty()){
+            return res.status(400).json({
+                status: false,
+                messageL: 'error',
+                errorMessage: errors.array()
+            })
+        }
+        const member = await Members.findOne({where: {member_code: req.body.memberCode} })
+        if(!member){
+            return res.status(404).json({
+                status: false,
+                message: 'error',
+                description: 'member was not found.'
+            })
+        }
+        try {
+            member.statusMember = req.body.status
+            member.save()
+            return res.status(200).json({
+                status: true,
+                message: 'ok',
+                description: 'status was chamged.'
+            })
+        } catch(error){
+            return res.status(500).json({
+                status: false,
+                message: 'error',
+                description: 'something went wrong.'
+            })
+        }
+    }
+    OnDeleteMember = async(req: any, res: any) => {
+        const finding = await Members.findOne({where: {member_code: req.params.code}})
+        if(!finding){
+            return res.status(404).json({
+                status: false,
+                message: 'error',
+                description: 'member was not found.'
+            })
+        }
+        try {
+            finding.destroy()
+            return res.status(200).json({
+                status: false,
+                message: 'ok',
+                description: 'member was deleted.'
+            })
+        } catch(error){
+            return res.status(500).json({
+                status: false,
+                message: 'error',
+                description: 'something went wrong.'
             })
         }
     }
