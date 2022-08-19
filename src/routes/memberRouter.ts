@@ -9,6 +9,7 @@ import { MembersController } from '../controllers/MembersController'
 import { Router } from 'express'
 import { check } from 'express-validator'
 import * as multerUpload from '../util/multerUpload'
+import { ChatController } from '../controllers/ChatController';
 const upload = multerUpload.uploadImage()
 const router = Router()
 const membersController = new MembersController()
@@ -17,6 +18,7 @@ const packageController = new PackageController()
 const productController = new ProductController()
 const bankController = new BankController()
 const cartController = new CartController()
+const chatController = new ChatController()
 
 /** for authenticate */
 router.post('/api/member/signin',[check('username').notEmpty().isString(), check('password').notEmpty().isString(),], membersController.OnSignin)
@@ -78,5 +80,11 @@ router.post('/api/member/order/review', AuthenticateMember, [
 ], orderController.OnReview)
 router.get('/api/member/getOrder', AuthenticateMember, orderController.OnGetOrderMember)
 router.get('/api/bank/get', bankController.OnGetBankAll)
+/** for chat */
+router.post('/api/member/chatToAdmin', [
+    check('message').isString()
+], AuthenticateMember, chatController.OnSendMessageToAdmin)
+router.get('/api/member/getOldChat', AuthenticateMember, chatController.OnGetOldChatMember)
+router.get('/api/member/readChat', AuthenticateMember, chatController.OnReadMessageMember)
 
 export const memberRouter = router

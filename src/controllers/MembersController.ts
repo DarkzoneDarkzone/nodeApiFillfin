@@ -96,10 +96,11 @@ export class MembersController extends ViewService {
                     gender: finding.gender,
                     userName: finding.username,
                     packageId: (package_sel)?package_sel.package_id:null,
-                    dateExpire: current_package.expire
+                    dateExpire: current_package?current_package.expire:null
                 }
             })
         } catch(error){
+            console.log(error)
             return res.status(500).json({
                 status: false,
                 message: 'error',
@@ -298,7 +299,7 @@ export class MembersController extends ViewService {
             return res.status(200).json({
                 status: true,
                 message: 'ok',
-                description: 'status was chamged.'
+                description: 'status was changed.'
             })
         } catch(error){
             return res.status(500).json({

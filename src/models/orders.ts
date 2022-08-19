@@ -40,6 +40,10 @@ export const Orders = sequelize.define('Orders',
         type: DataTypes.BOOLEAN,
         allowNull: false,
     },
+    isReview: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+    },
 }, {
     sequelize,
     tableName: 'orders',

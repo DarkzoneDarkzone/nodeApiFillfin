@@ -17,7 +17,8 @@ export class PackageController extends PackageService {
         let arr_package: any[] = []
         finding.forEach((data: any) => {
             const newArr = {
-                package_id: data.pack_id,
+                pack_id: data.pack_id,
+                package_id: data.package_id,
                 name: data.name,
                 image: data.image,
                 content: data.content,
@@ -53,6 +54,13 @@ export class PackageController extends PackageService {
             })
         }
         const finding = await Package.findOne({where:{package_id: req.body.packageId, gender: member.gender}})
+        if(!finding){
+            return res.status(404).json({
+                status: false,
+                message: 'error',
+                description: 'package was not found.'
+            })
+        }
         const data_response = {
             packageId: finding.package_id,
             packageName: finding.name,
@@ -122,7 +130,7 @@ export class PackageController extends PackageService {
         }
         const package_select = await Package.findOne({where:{package_id: req.body.packageId}})
         if(!package_select){
-            return res.status(404).jsn({
+            return res.status(404).json({
                 status: false,
                 message: 'error',
                 description: 'package was not found.'
@@ -134,11 +142,16 @@ export class PackageController extends PackageService {
         try {
             let slip = ''
             if(req.file){
-                let upload = "/uploads"+req.file.destination.split("uploads").pop()
-                let dest = req.file.destination
+                /** for slip destination */
+                const destSlip = req.file.destination.split("uploads")[0]+"/slip"+req.file.destination.split("uploads")[1]
+                if(!fs.existsSync(`${destSlip}`)){
+                    fs.mkdirSync(destSlip, { recursive: true })
+                }
+                /** for slip destination */
+                let upload = "/slip"+req.file.destination.split("uploads").pop()
                 var ext = path.extname(req.file.originalname)
                 let originalname = path.basename(req.file.originalname, ext)
-                for(let i = 1; fs.existsSync(dest+originalname+ext); i++){
+                for(let i = 1; fs.existsSync(destSlip+originalname+ext); i++){
                     originalname = originalname.split('(')[0]
                     originalname += '('+i+')'
                 }
@@ -146,7 +159,7 @@ export class PackageController extends PackageService {
                 .resize(500, 500)
                 .withMetadata()
                 .jpeg({ quality: 95})
-                .toFile( path.resolve(req.file.destination, originalname+ext))
+                .toFile(path.resolve(destSlip, originalname+ext))
                 .then((data: any) => {
                     fs.unlink( req.file.path, (err) => {
                         if(err){
@@ -222,11 +235,16 @@ export class PackageController extends PackageService {
         try {
             let slip = ''
             if(req.file){
-                let upload = "/uploads"+req.file.destination.split("uploads").pop()
-                let dest = req.file.destination
+                /** for slip destination */
+                const destSlip = req.file.destination.split("uploads")[0]+"/slip"+req.file.destination.split("uploads")[1]
+                if(!fs.existsSync(`${destSlip}`)){
+                    fs.mkdirSync(destSlip, { recursive: true })
+                }
+                /** for slip destination */
+                let upload = "/slip"+req.file.destination.split("uploads").pop()
                 var ext = path.extname(req.file.originalname)
                 let originalname = path.basename(req.file.originalname, ext)
-                for(let i = 1; fs.existsSync(dest+originalname+ext); i++){
+                for(let i = 1; fs.existsSync(destSlip+originalname+ext); i++){
                     originalname = originalname.split('(')[0]
                     originalname += '('+i+')'
                 }
@@ -234,7 +252,7 @@ export class PackageController extends PackageService {
                 .resize(500, 500)
                 .withMetadata()
                 .jpeg({ quality: 95})
-                .toFile( path.resolve(req.file.destination, originalname+ext))
+                .toFile(path.resolve(destSlip, originalname+ext))
                 .then((data: any) => {
                     fs.unlink( req.file.path, (err) => {
                         if(err){

@@ -1,3 +1,4 @@
+import { ChatTemp } from './chat_temp';
 import { Settings } from './settings';
 import { TokenLog } from './tokenLog';
 import { Log } from './log';
@@ -53,7 +54,8 @@ export function OnInit(){
         Banner,
         Log,
         TokenLog,
-        Settings
+        Settings,
+        ChatTemp
     }
     sequelize.sync(); 
 }

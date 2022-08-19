@@ -57,7 +57,7 @@ export class ViewService extends DBconnect {
                                 SELECT product.*, 
                                     product_image.path_img 
                                 FROM product 
-                                join product_image 
+                                LEFT JOIN product_image 
                                     on (product.id = product_image.product_id) 
                                 GROUP BY product.id
                             ) as product 
@@ -162,10 +162,12 @@ export class ViewService extends DBconnect {
     query_admin_order = async() => {
         sql = `SELECT * FROM 
                     (SELECT order_number, payment_status, status, totalprice, netprice, member_id, createdAt,
-                        updatedAt, name, address, phone, district, subdistrict, province, code, note, store_id,
+                        updatedAt, name, address, phone, district, subdistrict, province, code, note, store_id, slip, isRead,
                         GROUP_CONCAT(product_id) as product_id,
                         GROUP_CONCAT(product_name) as product_name,
                         GROUP_CONCAT(product_content) as product_content,
+                        GROUP_CONCAT(recommend) as recommend,
+                        GROUP_CONCAT(pre_order) as preOrder,
                         GROUP_CONCAT(price) as price,
                         GROUP_CONCAT(product_status) as product_status,
                         GROUP_CONCAT(product_image) as product_image
@@ -185,22 +187,28 @@ export class ViewService extends DBconnect {
                             ord_product.price, 
                             ord_product.store_id,
                             ord_product.status as product_status,
-                            ord_product.path_img as product_image
+                            ord_product.path_img as product_image,
+                            orders_payment.slip,
+                            ord_product.recommend,
+                        ord_product.pre_order
                     FROM orders 
                             JOIN orders_address ON (orders.order_number = orders_address.order_number)
                             JOIN 
                                 (SELECT orders_product.*, 
                                     product.store_id,
-                                    product.path_img
+                                    product.path_img,
+                                    product.recommend,
+                                product.pre_order
                                 FROM orders_product 
                                 JOIN (SELECT product.*, 
                                         product_image.path_img
                                 FROM product JOIN product_image ON (product.id = product_image.product_id) 
                                 GROUP BY product.id) as product 
-                            ON (orders_product.product_id = product.id)
-                            ) as ord_product
+                                ON (orders_product.product_id = product.id)
+                                ) as ord_product
                             ON (orders.order_number = ord_product.order_number)
-                    ) as ord GROUP BY ord.order_number, ord.store_id) as store_order ORDER BY store_order.createdAt DESC`
+                            JOIN orders_payment ON (orders_payment.order_number = orders.order_number)
+                    ) as ord GROUP BY ord.order_number, ord.store_id) as store_order ORDER BY store_order.isRead ASC, store_order.createdAt DESC`
         return this.findAll(sql, [])
     }
     query_order_one = async(order_number: any, product_id: any) => {
@@ -242,5 +250,16 @@ export class ViewService extends DBconnect {
                         review.display  
                 FROM review JOIN members ON (review.member_id = members.id) where review.display = "yes" AND store_id = ?`
         return this.findAll(sql, [store_id])
+    }
+    queryChatMember = async() => {
+        sql = `SELECT * FROM (
+                        SELECT chat_temp.*, 
+                            members.username, 
+                            row_number() over (partition by chat_temp.member_code order by chat_temp.isRead ASC) AS priority 
+                        FROM chat_temp 
+                        JOIN members ON (chat_temp.member_code = members.member_code)
+                ) as chatMember 
+                GROUP BY chatMember.member_code`
+        return this.findAll(sql, [])
     }
 }

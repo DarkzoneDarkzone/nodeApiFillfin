@@ -2,7 +2,6 @@ import { ProductImage } from './../models/productImage';
 import { ViewProductAllStore } from './../models/viewProductAllStore';
 import { sequelize } from './../util/database';
 import { Product } from './../models/product';
-import { Review } from './../models/review';
 import { Store } from './../models/store';
 import { Op } from 'sequelize'
 import * as Config from '../util/config'

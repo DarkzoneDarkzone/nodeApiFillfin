@@ -14,7 +14,7 @@ router.get('/streaming/video/:year/:month/:path', function(req: any, res: any){
     }
     const videoPath = (path.join(__dirname, `../../dist/public/video/${req.params.year}/${req.params.month}/`))+req.params.path
     const videoSize = fs.statSync(videoPath).size
-    const CHUNK_SIZE = 2*10**6 //2MB
+    const CHUNK_SIZE = 2*10**6 //2MB video file part will download every 2MB
     const start = Number(range.replace(/\D/g, ""))
     const end = Math.min(start + CHUNK_SIZE, videoSize-1)
     const contentLength = end - start +1

@@ -238,12 +238,36 @@ export class UserController {
             })
         }
         try {
+            /** upload image */
+            if(req.file){
+                let upload = "/uploads"+req.file.destination.split("uploads").pop()
+                let dest = req.file.destination
+                var ext = path.extname(req.file.originalname)
+                let originalname = path.basename(req.file.originalname, ext)
+                for(let i = 1; fs.existsSync(dest+originalname+ext); i++){
+                    originalname = originalname.split('(')[0]
+                    originalname += '('+i+')'
+                }
+                const image = await sharp(req.file.path)
+                .resize(500, 500)
+                .withMetadata()
+                .jpeg({ quality: 95})
+                .toFile( path.resolve(req.file.destination, originalname+ext))
+                .then((data: any) => {
+                    fs.unlink( req.file.path, (err) => {
+                        if(err){
+                            console.log(err)
+                        }
+                    })
+                    return upload+originalname+ext
+                })
+                finding.profile_img = image
+            }
             /** update data user */
             finding.email = req.body.email
             finding.permission = req.body.permission
-            finding.status_confirm = req.body.status_confirm
-            finding.display_name = req.body.display_name
-            finding.profile_img = req.body.profile_img
+            finding.status_confirm = req.body.statusConfirm
+            finding.display_name = req.body.name
             finding.save()
             return res.status(200).json({
                 status: true,
@@ -292,115 +316,6 @@ export class UserController {
             })
         }
     }
-    OnUploadVideoStore = async(req: any, res: any) => {
-        const store = await Store.findOne({where:{store_code: req.body.storeCode}})
-        if(!store){
-            return res.status(404).json({
-                status: false,
-                message: 'error',
-                description: 'store was not found.'
-            })
-        }
-        try {
-            if(req.file){
-                let dest = req.file.destination.split("uploads")
-                var ext = path.extname(req.file.originalname)
-                let originalname = path.basename(req.file.originalname, ext)
-                const newfolder = `${dest[0]}video${dest[1]}`
-                if(!fs.existsSync(newfolder)){
-                    fs.mkdirSync(newfolder, { recursive: true })
-                } 
-                for(let i = 1; fs.existsSync(newfolder+originalname+ext); i++){
-                    originalname = originalname.split('(')[0]
-                    originalname += '('+i+')'
-                }
-                const path_upload = "video"+dest[1]+originalname+ext
-                fs.copyFile(req.file.path, dest[0]+path_upload, (err) => {
-                    if(err){
-                        console.log(err)
-                    }
-                })
-                fs.unlink( req.file.path, (err) => {
-                    if(err){
-                        console.log(err)
-                    }
-                })
-                store.profile_video = path_upload
-                store.save()
-                return res.status(201).json({
-                    sttaus: true,
-                    message: 'ok',
-                    description: 'video was uploaded.'
-                })
-            }
-            return res.status(404).json({
-                status: false,
-                message: 'error',
-                description: 'file was not found.'
-            })
-        } catch(error){
-            return res.status(500).json({
-                status: false,
-                message: 'error',
-                description: 'something went wrong.'
-            })
-        }
-    }
-    OnUpdateContent = async(req: any, res: any) => {
-        const website = await Website.findOne({where:{id: req.body.id}})
-        if(!website){
-            return res.status(404).json({
-                status: false,
-                message: 'error',
-                description: 'content was not found.'
-            })
-        }
-        try {
-            if(req.file){
-                let dest = req.file.destination.split("uploads")
-                var ext = path.extname(req.file.originalname)
-                let originalname = path.basename(req.file.originalname, ext)
-                const newfolder = `${dest[0]}video${dest[1]}`
-                if(!fs.existsSync(newfolder)){
-                    fs.mkdirSync(newfolder, { recursive: true })
-                } 
-                for(let i = 1; fs.existsSync(newfolder+originalname+ext); i++){
-                    originalname = originalname.split('(')[0]
-                    originalname += '('+i+')'
-                }
-                const path_upload = "video"+dest[1]+originalname+ext
-                fs.copyFile(req.file.path, dest[0]+path_upload, (err) => {
-                    if(err){
-                        console.log(err)
-                    }
-                })
-                fs.unlink( req.file.path, (err) => {
-                    if(err){
-                        console.log(err)
-                    }
-                })
-                website.video_link = path_upload
-            }
-            website.type = req.body.type
-            website.title = req.body.title
-            website.content = req.body.content
-            website.h1 = req.body.h1
-            website.h2 = req.body.h2
-            website.image_link = req.body.image_link
-            website.save()
-            return res.status(201).json({
-                sttaus: true,
-                message: 'ok',
-                description: 'content was updated.'
-            })
-        } catch(error){
-            return res.status(500).json({
-                status: false,
-                message: 'error',
-                description: 'something went wrong.'
-            })
-        }
-    }
     OnGetAccessToken = async(req: any, res: any) => {
         const finding = await User.findOne({where:{refresh_token: req.body.token}})
         if(!finding){
@@ -423,6 +338,7 @@ export class UserController {
             const access_token = jwt.sign({
                 user_id: finding.id,
                 section: 'admin',
+                usercode: finding.users_code,
                 username: finding.username,
                 at: new Date().getTime()
             }, `${Config.secretKey}`, {expiresIn: '10m'})
@@ -442,35 +358,70 @@ export class UserController {
             })
         }
     }
-    OnGetContent = async(req: any, res: any) => {
-        const finding = await Website.findAll()
-        return res.status(200).json({
-            status: true,
-            message: 'ok',
-            description: 'get content success.',
-            content: finding
-        })
-    }
-    OnChangeStatusContent = async(req: any, res: any) => {
+    OnChangeStatus = async(req: any, res: any) => {
         const errors = validationResult(req)
         if(!errors.isEmpty()){
             return res.status(400).json({
                 status: false,
-                message: 'error',
+                messageL: 'error',
                 errorMessage: errors.array()
             })
         }
-        const finding = await Website.update(
-            {
-                display: req.body.display
-            },{
-                where: { id: req.body.id }
-            }
-        )
-        return res.status(200).json({
-            status: true,
-            message: 'ok',
-            description: 'update content success.'
-        })
+        const admin = await User.findOne({where: {users_code: req.body.adminCode} })
+        if(!admin){
+            return res.status(404).json({
+                status: false,
+                message: 'error',
+                description: 'admin was not found.'
+            })
+        }
+        try {
+            admin.status = req.body.status
+            admin.save()
+            return res.status(200).json({
+                status: true,
+                message: 'ok',
+                description: 'status was changed.'
+            })
+        } catch(error){
+            return res.status(500).json({
+                status: false,
+                message: 'error',
+                description: 'something went wrong.'
+            })
+        }
+    }
+    OnConfirmRegister = async(req: any, res: any) => {
+        const errors = validationResult(req)
+        if(!errors.isEmpty()){
+            return res.status(400).json({
+                status: false,
+                messageL: 'error',
+                errorMessage: errors.array()
+            })
+        }
+        const admin = await User.findOne({where: {users_code: req.body.adminCode} })
+        if(!admin){
+            return res.status(404).json({
+                status: false,
+                message: 'error',
+                description: 'admin was not found.'
+            })
+        }
+        try {
+            admin.status_confirm = "confirm"
+            admin.save()
+            return res.status(200).json({
+                status: true,
+                message: 'ok',
+                description: 'confirm was changed.'
+            })
+        } catch(error){
+            return res.status(500).json({
+                status: false,
+                message: 'error',
+                description: 'something went wrong.'
+            })
+        }
     }
 }

@@ -82,7 +82,6 @@ export class PostController extends ViewService{
                 description: 'data was created.'
             })
         } catch(error){
-            console.log(error)
             await t.rollback()
             return res.status(500).json({
                 status: false,

@@ -1,3 +1,4 @@
+import { ContentController } from './../controllers/ContentController';
 import { ReportController } from './../controllers/ReportController';
 import { ProductController } from './../controllers/ProductController';
 import { PostController } from './../controllers/PostController';
@@ -7,13 +8,14 @@ import { PackageController } from './../controllers/PackageController'
 import { AuthenticateAdmin } from './../middleware/AuthAdmin' 
 import { Router } from 'express'
 import { check } from 'express-validator'
-import * as multerUpload from '../util/multerUpload'
 import { UserController } from '../controllers/UserController'
 import { BankController } from '../controllers/BankController'
 import { MembersController } from '../controllers/MembersController' 
 import { OrderController } from '../controllers/OrderController' 
 import { ReviewController } from '../controllers/ReviewController'
 import { AdminManageController } from '../controllers/AdminManageController'
+import { ChatController } from '../controllers/ChatController';
+import * as multerUpload from '../util/multerUpload'
 
 const upload = multerUpload.uploadImage()
 const router = Router()
@@ -29,6 +31,8 @@ const postController = new PostController()
 const productController = new ProductController()
 const reportController = new ReportController()
 const adminManageController = new AdminManageController()
+const chatController = new ChatController()
+const contentController = new ContentController()
 
 /** for authenticate */
 router.get('/api/admin/get', AuthenticateAdmin, userController.OnGetAdminAll)
@@ -50,14 +54,17 @@ router.post('/api/admin/update', upload.single('image'), AuthenticateAdmin, [
     check('adminCode').isString(),
     check('email').isString(),
     check('name').isString(),
-    check('permission').isNumeric(),
-    check('statusConfirm').isString(),
-    check('status').isString(),
+    check('permission').isNumeric()
 ], userController.OnUpdate)
 router.get('/api/admin/delete/:code', AuthenticateAdmin, userController.OnDelete)
+router.get('/api/admin/confirmRegister/:code', AuthenticateAdmin, userController.OnConfirmRegister)
 router.post('/api/admin/getToken', [
     check('token').isString()
 ], userController.OnGetAccessToken)
+router.post('/api/admin/changeStatus', [
+    check('adminCode').isString(),
+    check('status').isString()
+], AuthenticateAdmin, userController.OnChangeStatus)
 /** for manage bank */
 router.get('/api/admin/bank/get', AuthenticateAdmin, bankController.OnGetBankAll)
 router.post('/api/admin/changeStatusBank', [
@@ -115,8 +122,8 @@ router.get('/api/admin/review/delete/:id', AuthenticateAdmin, reviewController.O
 /**for upload video */
 router.post('/api/admin/store/videoUpload', upload.single('video'), AuthenticateAdmin, [
     check('storeCode').isNumeric().notEmpty()
-], userController.OnUploadVideoStore)
-router.get('/api/admin/content/get', AuthenticateAdmin, userController.OnGetContent)
+], contentController.OnUploadVideoStore)
+router.get('/api/admin/content/get', AuthenticateAdmin, contentController.OnGetContentAll)
 router.post('/api/admin/content/update', [
     check('id').notEmpty(),
     check('type').isString(),
@@ -125,11 +132,11 @@ router.post('/api/admin/content/update', [
     check('h1').isString(),
     check('h2').isString(),
     check('image_link').isString(),
-], upload.single('video'), AuthenticateAdmin, userController.OnUpdateContent)
+], upload.single('video'), AuthenticateAdmin, contentController.OnUpdateContent)
 router.post('/api/admin/changeStatusContent', [
     check('id').notEmpty(),
     check('display').isString().notEmpty()
-], AuthenticateAdmin, userController.OnChangeStatusContent)
+], AuthenticateAdmin, contentController.OnChangeStatusContent)
 /** for manage store */
 router.get('/api/admin/store/get', AuthenticateAdmin, storeController.OnGetStoreAll)
 router.get('/api/admin/store/getDetails/:code', AuthenticateAdmin, adminStoreController.OnGetStoreDetails)
@@ -231,5 +238,23 @@ router.post('/api/admin/orderReport/get', AuthenticateAdmin, [
 router.post('/api/admin/setGrossProfit', [
     check('gp').notEmpty().isString()
 ],AuthenticateAdmin, adminManageController.OnSetGrossProfit)
+router.get('/api/admin/getSetting', AuthenticateAdmin, adminManageController.OnGetDataSettings)
+router.post('/api/admin/updateSetting', [
+    check('settingName').notEmpty().isString(),
+    check('settingValue').notEmpty().isString()
+],AuthenticateAdmin, adminManageController.OnUpdateSettings)
+/** for chat */
+router.post('/api/admin/chatToMember', [
+    check('memberCode').isString(),
+    check('message').isString(),
+], AuthenticateAdmin, chatController.OnSendMessageToMember)
+router.get('/api/admin/readChat/:code', AuthenticateAdmin, chatController.OnReadMessageAdmin)
+router.get('/api/admin/getOldChat', AuthenticateAdmin, chatController.OnGetOldChatAdmin)
+/** for log */
+router.get('/api/admin/getLog', AuthenticateAdmin, adminManageController.OnGetLogSignin)
+router.post('/api/admin/changeStatusLog', [
+    check('adminCode').isString(),
+    check('status').isString(),
+], AuthenticateAdmin, adminManageController.OnChangeStatusLog)
 
 export const adminRouter = router

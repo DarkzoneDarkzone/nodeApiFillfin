@@ -1,5 +1,5 @@
-import { Settings } from './../models/settings';
-import { Website } from './../models/website';
+import { Settings } from './../models/settings'
+import { Website } from './../models/website'
 import { Review } from './../models/review'
 import { OrdersCart } from './../models/ordersCart'
 import { Product } from './../models/product'
@@ -83,11 +83,16 @@ export class OrderController extends ViewService{
         try {
             let slip = ''
             if(req.file){
-                let upload = "/uploads"+req.file.destination.split("uploads").pop()
-                let dest = req.file.destination
+                /** for slip destination */
+                const destSlip = req.file.destination.split("uploads")[0]+"/slip"+req.file.destination.split("uploads")[1]
+                if(!fs.existsSync(`${destSlip}`)){
+                    fs.mkdirSync(destSlip, { recursive: true })
+                }
+                /** for slip destination */
+                let upload = "/slip"+req.file.destination.split("uploads").pop()
                 var ext = path.extname(req.file.originalname)
                 let originalname = path.basename(req.file.originalname, ext)
-                for(let i = 1; fs.existsSync(dest+originalname+ext); i++){
+                for(let i = 1; fs.existsSync(destSlip+originalname+ext); i++){
                     originalname = originalname.split('(')[0]
                     originalname += '('+i+')'
                 }
@@ -95,7 +100,7 @@ export class OrderController extends ViewService{
                 .resize(500, 500)
                 .withMetadata()
                 .jpeg({ quality: 95})
-                .toFile( path.resolve(req.file.destination, originalname+ext))
+                .toFile(path.resolve(destSlip, originalname+ext))
                 .then((data: any) => {
                     fs.unlink( req.file.path, (err) => {
                         if(err){
@@ -116,6 +121,9 @@ export class OrderController extends ViewService{
                 totalprice: totalPrice,
                 netprice: netPrice,
                 member_id: member.member_id,
+                message: '',
+                isRead: false,
+                isReview: false,
             }, { transaction: t })
             const order_address = await OrdersAddress.create({
                 order_number: order_number,
@@ -194,6 +202,7 @@ export class OrderController extends ViewService{
                 province: data.province,
                 code: data.code,
                 note: data.note,
+                isReview: data.isReview,
                 product: arr_product
             }
         })
@@ -216,13 +225,18 @@ export class OrderController extends ViewService{
                 let price = data.price.split(',')
                 let product_status = data.product_status.split(',')
                 let product_image = data.product_image.split(',')
+                let recommend = data.recommend.split(',')
+                let preOrder = data.preOrder.split(',')
                 for (let i = 0; i < product_id.length; i++) {
                     const dd = {
+                        product_id: product_id[i],
                         product_name: product_name[i],
                         product_content: product_content[i],
                         price: price[i],
                         product_status: product_status[i],
                         product_image: product_image[i],
+                        recommend: recommend[i],
+                        preOrder: preOrder[i]
                     }
                     arr_product.push(dd)
                 }
@@ -243,6 +257,8 @@ export class OrderController extends ViewService{
                 province: data.province,
                 code: data.code,
                 note: data.note,
+                slip: data.slip,
+                isRead: data.isRead?true:false,
                 product: arr_product
             }
         })
@@ -297,7 +313,8 @@ export class OrderController extends ViewService{
                 }
             }, { transaction: t})
             const orders = await Orders.update({
-                status: 'success'
+                status: 'success',
+                isReview: true
             },{
                 where:{
                     order_number: order.order_number, 
@@ -327,15 +344,15 @@ export class OrderController extends ViewService{
                 errorMessage: errors.array()
             })
         }
+        const finding = await Orders.findOne({where: {order_number: req.body.orderNumber}})
+        if(!finding){
+            return res.status(404).json({
+                status: false,
+                message: 'error',
+                description: 'order was not found.'
+            })
+        }
         try {
-            const finding = await Orders.fidnOne({where: {order_number: req.body.orderNumber}})
-            if(!finding){
-                return res.status(404).json({
-                    status: false,
-                    message: 'error',
-                    description: 'order was not found.'
-                })
-            }
             finding.payment_status = req.body.status
             finding.save()
             return res.status(200).json({
@@ -394,15 +411,15 @@ export class OrderController extends ViewService{
                 errorMessage: errors.array()
             })
         }
+        const finding = await OrdersProduct.findOne({where: {order_number: req.body.orderNumber, product_id: req.body.productId}})
+        if(!finding){
+            return res.status(404).json({
+                status: false,
+                message: 'error',
+                description: 'product was not found.'
+            })
+        }
         try {
-            const finding = await OrdersProduct.fidnOne({where: {order_number: req.body.orderNumber, product_id: req.body.productId}})
-            if(!finding){
-                return res.status(404).json({
-                    status: false,
-                    message: 'error',
-                    description: 'product was not found.'
-                })
-            }
             finding.status = req.body.status
             finding.save()
             return res.status(200).json({

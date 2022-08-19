@@ -18,7 +18,7 @@ export class CartController extends ViewService {
         const member = req.authMember
         try {
             const prod = await Product.findOne({where:{product_code: req.params.code}})
-            const cart = await OrdersCart.findOne({where:{productId: prod.id,memberId: member.member_id}})
+            const cart = await OrdersCart.findOne({where:{productId: prod.id, memberId: member.member_id}})
             if(!cart){
                 const cartCreate = await OrdersCart.create({
                     productId: prod.id,

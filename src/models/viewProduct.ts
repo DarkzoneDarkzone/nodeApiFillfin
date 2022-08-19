@@ -109,6 +109,10 @@ export const ViewProduct = sequelize.define('view_product',
         type: DataTypes.STRING(10),
         allowNull: false
     },
+    priority: {
+        type: DataTypes.INTEGER,
+        allowNull: false
+    },
 },
 {
     sequelize,

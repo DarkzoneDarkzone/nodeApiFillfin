@@ -1,3 +1,4 @@
+import { Settings } from './models/settings'
 import express, { Application } from 'express'
 import { socketPort, serverPort } from './util/config'
 import * as SyncModels from './models/SyncModels'
@@ -7,7 +8,10 @@ import { videoRouter } from './routes/videoRouter'
 import { websiteRouter } from './routes/websiteRouter'
 import { adminRouter } from './routes/adminRouter'
 import { storeRouter } from './routes/storeRouter'
-import { memberRouter } from './routes/memberRouter' 
+import { memberRouter } from './routes/memberRouter'
+import cron = require('node-cron')
+import moment from 'moment'
+import fs from 'fs'
 
 /* เปิด SyncModels เมื่อเปลี่ยนแปลง Database Structure */
 // SyncModels.OnInit()
@@ -34,9 +38,17 @@ app.use(storeRouter)
 app.use(websiteRouter)
 app.use(videoRouter)
 
-
 /* Socket Start */
 const server = app.listen(socketPort)
 const io = SIO.init(server)
+
+cron.schedule('0 0 * * * *', async() => {
+    const finding = await Settings.findOne({where:{setting_name: 'cron_job_month'}})
+    var public_path = path.join(__dirname, './../dist/public/')
+    const folderPath = `/slip/${moment().format('YYYY')}/${moment().subtract(parseInt(finding.setting_value), 'months').format('MM')}`
+    if(fs.existsSync(public_path+folderPath)){
+        fs.rmSync(public_path+folderPath, { recursive: true });
+    }
+});
 
 app.listen(serverPort)

@@ -40,7 +40,7 @@ export class AdminStoreController extends ViewService {
         const product_str = store_profile.id + Math.random().toString().substr(2, 10)+moment().unix();
         const product_code = await bcrypt.hash(product_str, 10);
         const prod_most_prior = await Product.findOne({
-            where:{store_id: store_profile.id},
+            where:{store_id: store_profile.id, pre_order: 'no', status: 'active'},
             order: [
                 ['priority', 'DESC']
             ]
@@ -141,7 +141,6 @@ export class AdminStoreController extends ViewService {
                 description: 'data was created.'
             })
         } catch(error){
-            console.log(error)
             await t.rollback()
             return res.status(500).json({
                 status: false,
@@ -170,7 +169,7 @@ export class AdminStoreController extends ViewService {
         const product_str = store_profile.id + Math.random().toString().substr(2, 10)+moment().unix()
         const product_code = await bcrypt.hash(product_str, 10)
         const prod_most_prior = await Product.findOne({
-            where:{store_id: store_profile.id},
+            where:{store_id: store_profile.id, pro_order: 'yes', status: 'active'},
             order: [
                 ['priority', 'DESC']
             ]
@@ -192,7 +191,6 @@ export class AdminStoreController extends ViewService {
                 clip: req.body.clip,
                 store_id: store_profile.id,
                 priority: (prod_most_prior)?prod_most_prior.priority+1:0
-
             }, { transaction: t })
             let productImage: any[] = []
             if(req.files.premium){
@@ -321,7 +319,6 @@ export class AdminStoreController extends ViewService {
                 description: 'data was created.'
             })
         } catch(error){
-            console.log(error)
             await t.rollback()
             return res.status(500).json({
                 status: false,
@@ -364,6 +361,14 @@ export class AdminStoreController extends ViewService {
         }
     }
     OnSetProductRecommend = async(req: any,  res: any) => {
+        const errors = validationResult(req)
+        if(!errors.isEmpty()){
+            return res.status(400).json({
+                status: false,
+                message: 'error',
+                errorMessage: errors.array()
+            })
+        }
         const product = await Product.findOne({where:{product_code: req.body.productCode}})
         try {
             product.recommend = req.body.recommend
@@ -391,18 +396,21 @@ export class AdminStoreController extends ViewService {
             })
         }
         const product = await Product.findOne({where:{product_code: req.body.productCode}})
+        console.log(req.body)
         try {
-            product.priority = req.body.priority
-            product.save()
             const updateAds = await Product.update(
                 {
-                    priority: +1,
+                    priority: sequelize.literal('priority + 1'),
                 },{
                     where: {
                         store_id: product.store_id,
-                        priority: { [Op.gte]: req.body.priority}
+                        pre_order: product.pre_order,
+                        priority: { [Op.gte]: req.body.priority},
+                        status: 'active'
                     }
                 })
+            product.priority = req.body.priority
+            product.save()
             return res.status(200).json({
                 status: true,
                 message: 'ok',
@@ -438,12 +446,12 @@ export class AdminStoreController extends ViewService {
                 status: 'active'
             },
             attributes: ['product_code', 'name_member', 'content_member', 'name_premium', 'content_premium', 'price_standard', 'price_premium', 'recommend', 'pre_order',
-                        'status', 'sex', 'clip', 'store_id', 'path_img', 'package_id', 'buy_limit', 'show_gift', 'price_sell', 'createdAt',
+                        'status', 'sex', 'clip', 'store_id', 'path_img', 'package_id', 'buy_limit', 'show_gift', 'price_sell', 'createdAt', 'priority',
                 [sequelize.fn('GROUP_CONCAT', sequelize.col('path_img')), 'product_img']
             ],
             group: ['store_id', 'id'],
             order: [
-                ['createdAt', 'DESC']
+                ['priority', 'ASC']
             ]
         })
         const review = await Review.findAll({
@@ -467,6 +475,7 @@ export class AdminStoreController extends ViewService {
                 show_gift: data.show_gift,
                 preOrder: data.pre_order,
                 product_img: data.product_img,
+                priority: data.priority
             }
             if(data.pre_order == "no"){
                 arr_product.push(arr_data)
