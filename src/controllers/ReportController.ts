@@ -1,4 +1,6 @@
-import 'moment/locale/th'
+import { sequelize } from './../util/database';
+import { Orders } from './../models/orders';
+import { Members } from './../models/members';
 import moment from 'moment'
 import fs from 'fs'
 const sharp = require('sharp')
@@ -247,5 +249,46 @@ export class ReportController extends ReportService {
                 descripion: 'something went wrong.'
             })
         }
+    }
+    OnGetDashboardData = async(req: any, res: any) => {
+        const findingMember = await Members.findAll({where: {statusMember: 'active', isStore: 'no'}})
+        const allMonth = moment.months()
+        const memPerMonth: any = allMonth.map((data: any) => {return {month: data, total: 0}})
+        findingMember.forEach((data: any) => {
+            memPerMonth.forEach((monthInArr: any, index: any) => {
+                if(moment(data.createdAt).format('MMMM') === monthInArr.month){
+                    memPerMonth[index].total += 1
+                }
+            })
+        })
+        const findingTotalPerPack: any = await this.queryMemberPackage()
+        const totalPerPack = findingTotalPerPack.map((data: any) => {
+            return {
+                packageName: data.name,
+                totalMember: data.totalMember
+            }
+        })
+        const currentDate = moment().format('YYYY-MM-DD')
+        const findingOrderAll: any = await Orders.findAll({where: {
+            where: sequelize.where(sequelize.fn('date', sequelize.col('createdAt')), '=', currentDate)
+        }})
+        const toDayOrder = findingOrderAll.map((data: any) => {
+            return {
+                paymentStatus: data.payment_status,
+                status: data.status,
+                totalPrice: data.totalprice
+            }
+        })
+        const findingStoreOrder: any = await this.queryStoreOrder()
+
+        return res.status(200).json({
+            status: true,
+            message: 'ok',
+            description: 'get memebr per month success.',
+            memberPerMonth: memPerMonth,
+            totalPerPack: totalPerPack,
+            toDayOrder: toDayOrder,
+            orderAll: findingStoreOrder
+        })
     }
 }

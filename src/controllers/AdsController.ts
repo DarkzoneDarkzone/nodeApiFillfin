@@ -1,6 +1,5 @@
 import { Ads } from './../models/ads'
 import { Op } from 'sequelize'
-import 'moment/locale/th'
 import moment from 'moment'
 import { validationResult } from 'express-validator'
 import fs from 'fs'

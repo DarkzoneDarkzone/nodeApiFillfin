@@ -1,7 +1,6 @@
 import * as Config from '../util/config'
 import * as jwt from 'jsonwebtoken'
 import moment from 'moment'
-import 'moment/locale/th'
 
 export const AuthenticateStore = async (req: any, res: any, next: any) => {
     const authHeader = req.get("Authorization")

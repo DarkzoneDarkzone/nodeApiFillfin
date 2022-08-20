@@ -1,5 +1,4 @@
 import { Banner } from './../models/banner'
-import 'moment/locale/th'
 import moment from 'moment'
 import { validationResult } from 'express-validator'
 import fs from 'fs'

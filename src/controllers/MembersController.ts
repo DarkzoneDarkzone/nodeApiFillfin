@@ -5,7 +5,6 @@ import { ViewService } from './../services/View.service'
 import { Members } from './../models/members'
 import * as jwt from 'jsonwebtoken'
 import * as Config from '../util/config'
-import 'moment/locale/th'
 import moment from 'moment'
 import bcrypt from 'bcrypt'
 import { validationResult } from 'express-validator'
@@ -15,7 +14,7 @@ import { transformArguments } from '@redis/search/dist/commands/AGGREGATE';
 export class MembersController extends ViewService {
     OnGetAll = async(req: any, res: any) => {
         /* finding data */
-        const finding = await Members.findAll()
+        const finding = await Members.findAll({order: [['createdAt', 'DESC']]})
         return res.status(200).json({
             status: true,
             message: 'ok',
@@ -100,7 +99,6 @@ export class MembersController extends ViewService {
                 }
             })
         } catch(error){
-            console.log(error)
             return res.status(500).json({
                 status: false,
                 message: 'error',

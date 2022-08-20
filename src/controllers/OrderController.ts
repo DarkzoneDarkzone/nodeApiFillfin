@@ -12,7 +12,6 @@ import { sequelize } from './../util/database'
 import * as jwt from 'jsonwebtoken'
 import * as Config from '../util/config'
 import { Op } from 'sequelize'
-import 'moment/locale/th'
 import moment from 'moment'
 import bcrypt from 'bcrypt'
 import { validationResult } from 'express-validator'
@@ -46,18 +45,18 @@ export class OrderController extends ViewService{
             if(prod.status!=='active'){
                 await OrdersCart.destroy({where:{productId: prod.id,memberId: member.member_id}})
                 const res_data = {
-                    name_product: (data.status_premium=='yes')?data.name_premium:data.name_member,
+                    name_product: (data.premium==='yes')?data.name_premium:data.name_member,
                 }
                 missingProduct.push(res_data)
             } else {
                 const order_data = {
                     order_number: order_number,
                     product_id: prod.id,
-                    product_name: (data.status_premium=='yes')?data.name_premium:data.name_member,
+                    product_name: (data.premium==='yes')?data.name_premium:data.name_member,
                     status: 'pending',
-                    product_content: (data.status_premium=='yes')?data.content_premium:data.content_member,
+                    product_content: (data.premium==='yes')?data.content_premium:data.content_member,
                     gross_profit: (data.recommend==='yes')?parseInt(gp_recommend.value):parseInt(packages.gross_profit),
-                    price: (data.status_premium=='yes')?data.price_premium:data.price_standard
+                    price: (data.premium==='yes')?data.price_premium:data.price_standard
                 }
                 totalPrice += order_data.price
                 netPrice += order_data.price * (1 - order_data.gross_profit / 100)

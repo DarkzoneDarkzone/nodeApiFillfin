@@ -3,7 +3,6 @@ import { Log } from './../models/log';
 import { Website } from './../models/website';
 import { Store } from './../models/store';
 import * as Config from '../util/config'
-import 'moment/locale/th'
 import moment from 'moment'
 import bcrypt from 'bcrypt'
 import fs from 'fs'
@@ -322,7 +321,7 @@ export class UserController {
             return res.status(404).json({
                 status: false,
                 message: 'error',
-                description: 'user is not found.'
+                description: 'user was not found.'
             })
         }
         const token = await TokenLog.findOne({where:{refresh_token: finding.refresh_token}})

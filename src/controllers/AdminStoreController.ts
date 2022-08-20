@@ -10,7 +10,6 @@ import { sequelize } from './../util/database';
 import { Op } from 'sequelize'
 import { Store } from './../models/store';
 import * as Config from '../util/config'
-import 'moment/locale/th'
 import moment from 'moment'
 import bcrypt from 'bcrypt'
 import fs from 'fs'
@@ -396,7 +395,6 @@ export class AdminStoreController extends ViewService {
             })
         }
         const product = await Product.findOne({where:{product_code: req.body.productCode}})
-        console.log(req.body)
         try {
             const updateAds = await Product.update(
                 {

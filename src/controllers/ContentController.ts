@@ -1,6 +1,5 @@
 import { Store } from './../models/store';
 import { Website } from './../models/website'
-import 'moment/locale/th'
 import moment from 'moment'
 import { validationResult } from 'express-validator'
 import path from 'path'

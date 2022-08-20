@@ -2,7 +2,6 @@ import fs from 'fs'
 import path from 'path'
 import multer from 'multer'
 import moment from 'moment'
-import 'moment/locale/th'
 
 export const uploadImage = () => {
   const storage = multer.diskStorage({

@@ -1,5 +1,4 @@
 import { Review } from './../models/review';
-import 'moment/locale/th'
 import moment from 'moment'
 import { validationResult } from 'express-validator'
 

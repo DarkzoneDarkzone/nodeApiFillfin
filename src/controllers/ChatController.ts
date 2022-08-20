@@ -4,7 +4,6 @@ import { Members } from './../models/members';
 import { ChatTemp } from './../models/chat_temp';
 import { sequelize } from './../util/database'
 import { Op } from 'sequelize'
-import 'moment/locale/th'
 import moment from 'moment'
 import { validationResult } from 'express-validator'
 

@@ -7,7 +7,6 @@ import { Members } from './../models/members';
 import { sequelize } from './../util/database';
 import { Store } from './../models/store';
 import * as Config from '../util/config'
-import 'moment/locale/th'
 import moment from 'moment'
 import bcrypt from 'bcrypt'
 import fs from 'fs'

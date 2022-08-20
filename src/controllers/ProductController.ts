@@ -5,7 +5,6 @@ import { Product } from './../models/product';
 import { Store } from './../models/store';
 import { Op } from 'sequelize'
 import * as Config from '../util/config'
-import 'moment/locale/th'
 import moment from 'moment'
 import bcrypt from 'bcrypt'
 import { validationResult } from 'express-validator'

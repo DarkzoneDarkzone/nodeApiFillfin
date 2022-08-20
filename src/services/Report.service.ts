@@ -107,5 +107,32 @@ export class ReportService extends DBconnect {
                 WHERE (orders.createdAt > ? AND orders.createdAt < ?)`
         return this.findAll(sql, [start, end])
     }
+    queryMemberPackage = async() => {
+        sql = `SELECT *, 
+                    COUNT(view_member_package.mem_id) as totalMember
+                FROM view_member_package 
+                WHERE isStore = "no" 
+                GROUP BY package_id`
+        return this.findAll(sql, [])
+    }
+    queryStoreOrder = async() => {
+        sql =   `SELECT perStore.*, 
+                        store.name 
+                FROM store 
+                JOIN (SELECT allPro.store_id,
+                        allPro.status,
+                        SUM(allPro.price) as totalPrice, 
+                        COUNT(allPro.store_id) as totalProductSold
+                    FROM (
+                        SELECT orders_product.*, 
+                            product.store_id 
+                        FROM product 
+                        JOIN orders_product 
+                        ON (product.id = orders_product.product_id)
+                    ) as allPro 
+                GROUP BY allPro.store_id) as perStore 
+                ON (store.id = perStore.store_id)`
+        return this.findAll(sql, [])
+    }
 }
 

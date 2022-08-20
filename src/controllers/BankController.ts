@@ -2,7 +2,6 @@ import { sequelize } from './../util/database'
 import { BankProvider } from './../models/bankProvider'
 import { BankAccount } from './../models/bankAccount'
 import { BankService } from '../services/Bank.service'
-import 'moment/locale/th'
 import { validationResult } from 'express-validator'
 import fs from 'fs'
 const sharp = require('sharp')

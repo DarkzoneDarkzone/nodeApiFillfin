@@ -2,7 +2,6 @@ import { TokenLog } from './../models/tokenLog';
 import { Settings } from './../models/settings';
 import { Store } from './../models/store';
 import { Members } from './../models/members';
-import 'moment/locale/th'
 import fs from 'fs'
 import bcrypt from 'bcrypt'
 const sharp = require('sharp')
@@ -75,6 +74,13 @@ export class AdminManageController {
         }
         try {
             const finding = await User.findOne({where:{ users_code: req.body.adminCode }})
+            if(finding.permission !== 1){
+                return res.status(405).json({
+                    status: false,
+                    message: 'error',
+                    description: "Don't have permission"
+                })
+            }
             finding.password = await bcrypt.hash(req.body.newPassword, 10)
             finding.save()
             return res.status(200).json({

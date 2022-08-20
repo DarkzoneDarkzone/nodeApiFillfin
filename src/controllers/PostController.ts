@@ -3,7 +3,6 @@ import { PostImage } from './../models/postImage';
 import { Store } from './../models/store';
 import { Post } from './../models/post';
 import { ViewService } from './../services/View.service';
-import 'moment/locale/th'
 import moment from 'moment'
 import { validationResult } from 'express-validator'
 import fs from 'fs'

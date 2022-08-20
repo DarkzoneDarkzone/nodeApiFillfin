@@ -256,5 +256,7 @@ router.post('/api/admin/changeStatusLog', [
     check('adminCode').isString(),
     check('status').isString(),
 ], AuthenticateAdmin, adminManageController.OnChangeStatusLog)
+/** for dashboard */
+router.get('/api/admin/getDashboard', AuthenticateAdmin, reportController.OnGetDashboardData)
 
 export const adminRouter = router
