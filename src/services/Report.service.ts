@@ -134,5 +134,14 @@ export class ReportService extends DBconnect {
                 ON (store.id = perStore.store_id)`
         return this.findAll(sql, [])
     }
+    queryNewMember = async() => {
+        sql = `SELECT package_order.* 
+                FROM members 
+                JOIN package_order ON (members.id = package_order.member_id) 
+                WHERE package_order.status_confirm != "confirm" 
+                    OR package_order.status_payment != "confirm" 
+                GROUP BY package_order.member_id`
+        return this.findAll(sql, [])
+    }
 }
 

@@ -93,7 +93,7 @@ export class StoreController extends ViewService{
                 height: '',
                 bwh: '',
                 gender: req.body.gender,
-                status: 'active'
+                status: 'inactive'
             }, { transaction: t })
             const store_member = await Members.create({
                 member_code: store_member_code.replace(/\W/g,""),

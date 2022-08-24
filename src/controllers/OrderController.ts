@@ -213,6 +213,56 @@ export class OrderController extends ViewService{
         })
     }
     OnGetOrderStore = async(req: any, res: any) => {
+        const store = req.authStore
+        const orderss: any = await this.query_store_order(store.store_id)
+        const order_response = orderss.map((data: any) => {
+            const arr_product: any = []
+            let product_id = data.product_id.split(',')
+            if(product_id.length > 0){
+                let product_name = data.product_name.split(',')
+                let product_content = data.product_content.split(',')
+                let price = data.price.split(',')
+                let product_status = data.product_status.split(',')
+                let product_image = data.product_image.split(',')
+                for (let i = 0; i < product_id.length; i++) {
+                    const dd = {
+                        product_id: product_id[i],
+                        product_name: product_name[i],
+                        product_content: product_content[i],
+                        price: price[i],
+                        product_status: product_status[i],
+                        product_image: product_image[i],
+                    }
+                    arr_product.push(dd)
+                }
+            }
+            return {
+                orderNumber: data.order_number,
+                paymentStatus: data.payment_status,
+                status: data.status,
+                totalPrice: data.totalprice,
+                netprice: data.netprice,
+                createdAt: data.createdAt,
+                updatedAt: data.updatedAt,
+                name: data.name,
+                address: data.address,
+                phone: data.phone,
+                district: data.district,
+                subdistrict: data.subdistrict,
+                province: data.province,
+                code: data.code,
+                note: data.note,
+                product: arr_product
+            }
+        })
+        return res.status(200).json({
+            status: true,
+            message: 'ok',
+            description: 'get data success.',
+            order: order_response
+        })
+    }
+    OnGetOrderAdmin = async(req: any, res: any) => {
         const store = req.authAdmin
         const order: any = await this.query_admin_order()
         const order_response: any = order.map((data: any) => {

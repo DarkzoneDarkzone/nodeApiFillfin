@@ -1,3 +1,5 @@
+import { ChatTemp } from './../models/chat_temp';
+import { Store } from './../models/store';
 import { sequelize } from './../util/database';
 import { Orders } from './../models/orders';
 import { Members } from './../models/members';
@@ -274,13 +276,32 @@ export class ReportController extends ReportService {
         }})
         const toDayOrder = findingOrderAll.map((data: any) => {
             return {
+                orderNumber: data.order_number,
                 paymentStatus: data.payment_status,
                 status: data.status,
-                totalPrice: data.totalprice
+                totalPrice: parseInt(data.totalprice)
             }
         })
         const findingStoreOrder: any = await this.queryStoreOrder()
-
+        const filterStoreOrder = findingStoreOrder.map((data: any) => {
+            return {
+                name: data.name,
+                status: data.status,
+                store_id: data.store_id,
+                totalPrice: parseInt(data.totalPrice),
+                totalProductSold:  data.totalProductSold
+            }
+        })
+        const newStore = await Store.findAll({where:{status: 'inactive'}})
+        const newMember: any = await this.queryNewMember()
+        const newOrder = await Orders.findAll({where: {status: 'pending', payment_status: 'pending'}})
+        const newChat = await ChatTemp.findAll({where:{isRead: 0}})
+        const dashboardTop = {
+            newStore: newStore.length,
+            newMember: newMember.length,
+            newOrder: newOrder.length,
+            newChat: newChat.length
+        }
         return res.status(200).json({
             status: true,
             message: 'ok',
@@ -288,7 +309,8 @@ export class ReportController extends ReportService {
             memberPerMonth: memPerMonth,
             totalPerPack: totalPerPack,
             toDayOrder: toDayOrder,
-            orderAll: findingStoreOrder
+            orderAll: filterStoreOrder,
+            forTopDashboard: dashboardTop
         })
     }
 }

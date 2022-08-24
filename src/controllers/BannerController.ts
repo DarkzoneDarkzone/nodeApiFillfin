@@ -45,7 +45,7 @@ export class BannerController {
             return res.status(400).json({
                 status: false,
                 message: 'error',
-                description: 'ads was not found.'
+                description: 'banner was not found.'
             })
         }
         try {
@@ -59,7 +59,6 @@ export class BannerController {
                     originalname += '('+i+')'
                 }
                 const image = await sharp(req.file.path)
-                .resize(500, 500)
                 .withMetadata()
                 .jpeg({ quality: 95})
                 .toFile( path.resolve(req.file.destination, originalname+ext))
@@ -80,7 +79,40 @@ export class BannerController {
             return res.status(200).json({
                 status: true,
                 message: 'ok',
-                description: 'ads was updated.'
+                description: 'banner was updated.'
+            })
+        } catch(error){
+            return res.status(500).json({
+                status: false,
+                message: 'error',
+                description: 'something went wrong.'
+            })
+        }
+    }
+    OnChangeDisplayBanner = async(req: any, res: any) => {
+        const errors = validationResult(req)
+        if(!errors.isEmpty()){
+            return res.status(400).json({
+                status: false,
+                message: 'error',
+                errorMessage: errors.array()
+            })
+        }
+        try {
+            const finding = await Banner.findOne({where:{id: req.body.id}})
+            if(!finding){
+                return res.status(400).json({
+                    status: false,
+                    message: 'error',
+                    description: 'banner was not found.'
+                })
+            }
+            finding.display = req.body.display
+            finding.save()
+            return res.status(200).json({
+                status: true,
+                message: 'ok',
+                description: 'adbanners was updated.'
             })
         } catch(error){
             return res.status(500).json({

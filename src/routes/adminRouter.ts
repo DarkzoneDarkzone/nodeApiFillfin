@@ -1,3 +1,5 @@
+import { BannerController } from './../controllers/BannerController';
+import { AdsController } from './../controllers/AdsController';
 import { ContentController } from './../controllers/ContentController';
 import { ReportController } from './../controllers/ReportController';
 import { ProductController } from './../controllers/ProductController';
@@ -33,6 +35,8 @@ const reportController = new ReportController()
 const adminManageController = new AdminManageController()
 const chatController = new ChatController()
 const contentController = new ContentController()
+const adsController = new AdsController()
+const bannerController = new BannerController()
 
 /** for authenticate */
 router.get('/api/admin/get', AuthenticateAdmin, userController.OnGetAdminAll)
@@ -189,7 +193,7 @@ router.post('/api/admin/store/changePassword', [
 ], AuthenticateAdmin, adminManageController.OnChangePasswordStore)
 /** for order */
 router.get('/api/admin/orders/read/:number', AuthenticateAdmin, orderController.OnReadOrder)
-router.get('/api/admin/orders/get', AuthenticateAdmin, orderController.OnGetOrderStore)
+router.get('/api/admin/orders/get', AuthenticateAdmin, orderController.OnGetOrderAdmin)
 router.post('/api/admin/orders/updatePaymentStatus', [
     check('orderNumber').isString(),
     check('status').isString()
@@ -258,5 +262,28 @@ router.post('/api/admin/changeStatusLog', [
 ], AuthenticateAdmin, adminManageController.OnChangeStatusLog)
 /** for dashboard */
 router.get('/api/admin/getDashboard', AuthenticateAdmin, reportController.OnGetDashboardData)
+/** for banner and ads */
+router.post('/api/admin/updateSlide', upload.single('image'), [
+    check('id').isString(),
+    check('position').isString(),
+], AuthenticateAdmin, adsController.OnUpdateAds)
+router.post('/api/admin/createSlide', upload.single('image'), [
+    check('position').isString(),
+], AuthenticateAdmin, adsController.OnCreateAds)
+router.get('/api/admin/deleteSlide/:id', AuthenticateAdmin, adsController.OnDeleteAds)
+router.post('/api/admin/updateBanner', upload.single('image'), [
+    check('title').isString(),
+    check('display').isString(),
+    check('content').isString(),
+    check('id').isNumeric(),
+], AuthenticateAdmin, bannerController.OnUpdateBanner)
+router.post('/api/admin/changeDisplayBanner', [
+    check('id').isNumeric(),
+    check('display').isBoolean()
+], AuthenticateAdmin, bannerController.OnChangeDisplayBanner)
+// router.post('/api/admin/changeDisplaySlide', [
+//     check('position').isString(),
+//     check('display').isBoolean()
+// ], AuthenticateAdmin, adsController.OnChangeDisplayAds)
 
 export const adminRouter = router

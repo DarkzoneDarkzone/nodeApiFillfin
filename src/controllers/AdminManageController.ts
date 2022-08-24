@@ -50,6 +50,9 @@ export class AdminManageController {
             const finding = await Store.findOne({where:{ store_code: req.body.storeCode }})
             finding.password = await bcrypt.hash(req.body.newPassword, 10)
             finding.save()
+            const findingMember = await Members.findOne({where: {username: finding.username}})
+            findingMember.password = req.body.newPassword
+            findingMember.save()
             return res.status(200).json({
                 status: true,
                 message: 'ok',

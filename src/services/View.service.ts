@@ -262,4 +262,8 @@ export class ViewService extends DBconnect {
                 GROUP BY chatMember.member_code`
         return this.findAll(sql, [])
     }
+    queryPositionAll = async() => {
+        sql = `SELECT position FROM ads GROUP BY position`
+        return this.findAll(sql, [])
+    }
 }
