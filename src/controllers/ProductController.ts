@@ -33,7 +33,22 @@ export class ProductController extends ViewService {
                 package_member = member_package.package_id
             }
         }
-        const product_store: any = await ViewProductAllStore.findAndCountAll({where:{sex: gender, storeStatus: 'active', store_name:{[Op.substring]:store_name}},offset: offset,limit: limit})
+        const product_store: any = await ViewProductAllStore.findAndCountAll({
+            where:{
+                sex: gender, 
+                storeStatus: 'active',
+                store_name:{[Op.substring]:store_name},
+                [Op.or]: [{ pre_order: 'no'}, { pre_order: status_standard?"no":"yes"}]
+            },
+            attributes: ['store_name', 'store_profile', 'store_concept', 'store_code', 'storeStatus', 'id', 'product_code', 'name_member', 'content_member',
+                        'name_premium', 'content_premium', 'price_standard', 'price_premium', 'recommend', 'pre_order', 'status', 'sex', 'sex', 'clip', 
+                        'store_id', 'priority', 'createdAt', 'updatedAt', 'product_img', 'productPriority',
+                        [sequelize.fn('COUNT', sequelize.col('product_code')), 'totalProduct']
+            ],
+            offset: offset,
+            limit: limit,
+            group: ['store_id']
+        })
         const product_recom: any = await this.query_product_recommend(package_member, gender)
         const filter_product_store = product_store.rows.map((data: any) => {
             return {
@@ -269,8 +284,8 @@ export class ProductController extends ViewService {
                 content_member: req.body.content_member,
                 name_premium: req.body.name_premium,
                 content_premium: req.body.content_premium,
-                price_standard: req.body.price_standard,
-                price_premium: req.body.price_premium,
+                price_standard: parseInt(req.body.price_standard),
+                price_premium: parseInt(req.body.price_premium),
                 recommend: "no",
                 pre_order: "no",
                 status: 'active',
@@ -310,6 +325,7 @@ export class ProductController extends ViewService {
                         hover: (count==1)?"yes":"no",
                         display: "yes",
                         premium: "no",
+                        member_type: ""
                     }
                     count++
                     productImage.push(arr)
@@ -344,6 +360,7 @@ export class ProductController extends ViewService {
                         hover: "no",
                         display: "yes",
                         premium: "yes",
+                        member_type: ""
                     }
                     count++
                     productImage.push(arr)
@@ -392,8 +409,8 @@ export class ProductController extends ViewService {
                 content_member: '',
                 name_premium: req.body.name_premium,
                 content_premium: req.body.content_premium,
-                price_standard: req.body.price_premium,
-                price_premium: req.body.price_premium,
+                price_standard: parseInt(req.body.price_premium),
+                price_premium: parseInt(req.body.price_premium),
                 recommend: "no",
                 pre_order: "yes",
                 status: 'active',
@@ -432,6 +449,7 @@ export class ProductController extends ViewService {
                         hover: "no",
                         display: "yes",
                         premium: "yes",
+                        member_type: ''
                     }
                     productImage.push(arr)
                 }

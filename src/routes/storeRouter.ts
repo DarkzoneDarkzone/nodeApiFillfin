@@ -51,7 +51,7 @@ router.post('/api/store/productPre/create', AuthenticateStore, upload.fields([{n
 ], productController.OnCreateProductPre)
 router.post('/api/store/post/create', AuthenticateStore, upload.array('image'), [
     check('caption').notEmpty().isString()
-], postController.OnCreatePost)
+], postController.OnCreatePostStore)
 router.get('/api/store/post/delete/:code', AuthenticateStore, postController.OnDeletePost)
 router.get('/api/store/product/delete/:code', AuthenticateStore, productController.OnDeleteProduct)
 router.post('/api/store/updateConcept', AuthenticateStore, [

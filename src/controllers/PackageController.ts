@@ -304,13 +304,6 @@ export class PackageController extends PackageService {
             })
         }
         const admin = req.authAdmin
-        if(!admin){
-            return res.status(401).json({
-                status: false,
-                message: 'error',
-                description: 'not authenticated.'
-            })
-        }
         const payment = await PackagePayment.findOne({where:{package_order_id: req.params.paymentId}})
         if(!payment){
             return res.status(404).json({
@@ -329,12 +322,18 @@ export class PackageController extends PackageService {
         }
         const package_select = await Package.findOne({where:{package_id: order.package_id}})
         const begin = moment().format('YYYY-MM-DD HH:mm:ss')
-        const expire = moment(begin).add(package_select.day, 'days').format('YYYY-MM-DD HH:mm:ss')
+        let expire = moment(begin).add(package_select.day, 'days').format('YYYY-MM-DD HH:mm:ss')
         try {
+            const last_package: any = await PackageOrder.findOne({where:{member_id: order.member_id, status_expire: 'no', status_confirm: 'confirm', status_payment: 'confirm'}})
+            if(last_package){
+                expire = moment(last_package.expire).add(package_select.day, 'days').format('YYYY-MM-DD HH:mm:ss')
+                last_package.status_expire = 'yes'
+                last_package.save()
+            }
             payment.status_confirm = "confirm"
             payment.user_confirm = admin.user_id
             payment.save()
-            order.begin = begin
+            order.begin = last_package?last_package.begin:begin
             order.expire = expire
             order.status_expire = "no"
             order.status_confirm = "confirm"
@@ -346,6 +345,7 @@ export class PackageController extends PackageService {
                 description: 'confirm payment success.'
             })
         } catch(error){
+            console.log(error)
             return res.status(500).json({
                 status: false,
                 message:' error',

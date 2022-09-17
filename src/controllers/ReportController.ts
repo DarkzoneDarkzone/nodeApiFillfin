@@ -9,6 +9,7 @@ const sharp = require('sharp')
 import path from 'path'
 import ExcelJS from 'exceljs'
 import { ReportService } from '../services/Report.service'
+import { Op } from 'sequelize';
 
 export class ReportController extends ReportService {
     OnGetStoreReport = async(req: any, res: any) => {
@@ -72,13 +73,14 @@ export class ReportController extends ReportService {
             ];
             worksheet.addRows(filteredData)
             var public_path = path.join(__dirname, '../../dist/public/')
-            var newfolder = public_path+`files/${moment().format('YYYY')}/${moment().format('MM')}/`
-            if(!fs.existsSync(`${newfolder}`)){
-                fs.mkdirSync(newfolder, { recursive: true })
+            var newfolder = public_path
+            var fileFolder = `files/${moment().format('YYYY')}/${moment().format('MM')}/`
+            if(!fs.existsSync(`${newfolder+fileFolder}`)){
+                fs.mkdirSync(newfolder+fileFolder, { recursive: true })
             }
             const filename = `ReportShop${moment().format('YYYYMMDDHH')}.xlsx`
-            const pathname = '/'+(newfolder+filename).split('public\\')[1]
-            await workbook.xlsx.writeFile(newfolder+filename);
+            const pathname = '/'+fileFolder+filename
+            workbook.xlsx.writeFile(newfolder+fileFolder+filename);
             return res.status(200).json({
                 status: true,
                 message: 'ok',
@@ -147,13 +149,14 @@ export class ReportController extends ReportService {
             ];
             worksheet.addRows(filteredData)
             var public_path = path.join(__dirname, '../../dist/public/')
-            var newfolder = public_path+`files/${moment().format('YYYY')}/${moment().format('MM')}/`
-            if(!fs.existsSync(`${newfolder}`)){
-                fs.mkdirSync(newfolder, { recursive: true })
+            var newfolder = public_path
+            var fileFolder = `files/${moment().format('YYYY')}/${moment().format('MM')}/`
+            if(!fs.existsSync(`${newfolder+fileFolder}`)){
+                fs.mkdirSync(newfolder+fileFolder, { recursive: true })
             }
             const filename = `ReportCustomer${moment().format('YYYYMMDDHH')}.xlsx`
-            const pathname = '/'+(newfolder+filename).split('public\\')[1]
-            await workbook.xlsx.writeFile(newfolder+filename);
+            const pathname = '/'+fileFolder+filename
+            workbook.xlsx.writeFile(newfolder+fileFolder+filename);
             return res.status(200).json({
                 status: true,
                 message: 'ok',
@@ -232,13 +235,14 @@ export class ReportController extends ReportService {
             ];
             worksheet.addRows(filteredData)
             var public_path = path.join(__dirname, '../../dist/public/')
-            var newfolder = public_path+`files/${moment().format('YYYY')}/${moment().format('MM')}/`
-            if(!fs.existsSync(`${newfolder}`)){
-                fs.mkdirSync(newfolder, { recursive: true })
+            var newfolder = public_path
+            var fileFolder = `files/${moment().format('YYYY')}/${moment().format('MM')}/`
+            if(!fs.existsSync(`${newfolder+fileFolder}`)){
+                fs.mkdirSync(newfolder+fileFolder, { recursive: true })
             }
             const filename = `ReportOrder${moment().format('YYYYMMDDHH')}.xlsx`
-            const pathname = '/'+(newfolder+filename).split('public\\')[1]
-            await workbook.xlsx.writeFile(newfolder+filename)
+            const pathname = '/'+fileFolder+filename
+            workbook.xlsx.writeFile(newfolder+fileFolder+filename);
             return res.status(200).json({
                 status: true,
                 message: 'ok',
@@ -292,7 +296,13 @@ export class ReportController extends ReportService {
                 totalProductSold:  data.totalProductSold
             }
         })
-        const newStore = await Store.findAll({where:{status: 'inactive'}})
+        const newStore = await Store.findAll({where:
+            {
+                status: 'inactive',
+                createdAt: {
+                    [Op.eq]: sequelize.col('updatedAt')
+                }
+            }})
         const newMember: any = await this.queryNewMember()
         const newOrder = await Orders.findAll({where: {status: 'pending', payment_status: 'pending'}})
         const newChat = await ChatTemp.findAll({where:{isRead: 0}})

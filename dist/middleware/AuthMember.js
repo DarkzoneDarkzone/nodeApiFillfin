@@ -35,12 +35,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Authenticate = void 0;
+exports.AuthenticateMember = void 0;
 const Config = __importStar(require("../util/config"));
 const jwt = __importStar(require("jsonwebtoken"));
 const moment_1 = __importDefault(require("moment"));
-require("moment/locale/th");
-const Authenticate = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const AuthenticateMember = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const authHeader = req.get("Authorization");
     if (!authHeader) {
         return res.status(401).json({
@@ -61,6 +60,13 @@ const Authenticate = (req, res, next) => __awaiter(void 0, void 0, void 0, funct
                     status: false,
                     message: 'error',
                     description: 'token was expired.'
+                });
+            }
+            if (decodedToken.section != "member") {
+                return res.status(401).json({
+                    status: false,
+                    message: 'error',
+                    description: 'not have permission.'
                 });
             }
             /* data keep for use when update data in database */
@@ -84,4 +90,4 @@ const Authenticate = (req, res, next) => __awaiter(void 0, void 0, void 0, funct
         });
     }
 });
-exports.Authenticate = Authenticate;
+exports.AuthenticateMember = AuthenticateMember;

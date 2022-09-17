@@ -1,22 +1,21 @@
 import { Ads } from './../models/ads'
-import { Op } from 'sequelize'
 import moment from 'moment'
 import { validationResult } from 'express-validator'
 import fs from 'fs'
 const sharp = require('sharp')
 import path from 'path'
+import { ViewService } from '../services/View.service'
 
-export class AdsController {
+export class AdsController extends ViewService {
     OnGetAds = async(req: any, res: any) => {
-        const finding = await Ads.findOne({
-            where:{
-                position: req.params.page,
-                display: true
-            },
-            order: [
-                ['priority', 'ASC'],
-            ],
-        })
+        const finding:any = await this.queryAdsShow(req.params.page)
+        if(!finding){
+            return res.status(404).json({
+                status: false,
+                message: 'error',
+                description: 'ads was not found.'
+            })
+        }
         const filtered =  {
             ads_id: finding.id,
             position: finding.position,
@@ -24,7 +23,7 @@ export class AdsController {
             content: finding.content,
             h1: finding.h1,
             h2: finding.h2,
-            image: finding.img_path,
+            image: finding.imgPath,
         }
         return res.status(200).json({
             status: true,
@@ -98,14 +97,9 @@ export class AdsController {
                     return upload+originalname+ext
                 })
                 ads.img_path = image
-                ads.save()
-            } else {
-                return res.status(400).json({
-                    sttaus: false,
-                    message: 'error',
-                    description: "ads wasn't updated."
-                })
             }
+            ads.position = req.body.position
+            ads.save()
             return res.status(201).json({
                 sttaus: true,
                 message: 'ok',
@@ -153,7 +147,7 @@ export class AdsController {
                 })
                 await Ads.create({
                     position: req.body.position,
-                    isMen: req.body.isMen,
+                    isMen: '',
                     title: '',
                     content: '',
                     h1: '',

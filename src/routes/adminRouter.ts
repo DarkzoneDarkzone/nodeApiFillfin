@@ -135,8 +135,12 @@ router.post('/api/admin/content/update', [
     check('content').isString(),
     check('h1').isString(),
     check('h2').isString(),
-    check('image_link').isString(),
-], upload.single('video'), AuthenticateAdmin, contentController.OnUpdateContent)
+], upload.single('image'), AuthenticateAdmin, contentController.OnUpdateContent)
+router.post('/api/admin/content/changeVideo', [
+    check('id').notEmpty(),
+    check('pathUrl').isString(),
+    check('isFile').isBoolean(),
+], upload.single('video'), AuthenticateAdmin, contentController.OnChangeVideoContent)
 router.post('/api/admin/changeStatusContent', [
     check('id').notEmpty(),
     check('display').isString().notEmpty()
@@ -144,7 +148,10 @@ router.post('/api/admin/changeStatusContent', [
 /** for manage store */
 router.get('/api/admin/store/get', AuthenticateAdmin, storeController.OnGetStoreAll)
 router.get('/api/admin/store/getDetails/:code', AuthenticateAdmin, adminStoreController.OnGetStoreDetails)
-router.post('/api/admin/store/changeStatusStore', AuthenticateAdmin, storeController.OnChangeStatusStore)
+router.post('/api/admin/store/changeStatusStore', [
+    check('storeCode').isString(),
+    check('status').isString(),
+], AuthenticateAdmin, storeController.OnChangeStatusStore)
 router.post('/api/admin/store/updateProfile', AuthenticateAdmin, upload.single('image'), [
     check('storeCode').isString(),
     check('name').isString(),
@@ -172,7 +179,7 @@ router.post('/api/admin/storeProductPre/Create', AuthenticateAdmin, upload.field
 ], adminStoreController.OnCreateProductPre)
 router.post('/api/admin/storePost/create', AuthenticateAdmin, upload.array('image'), [
     check('storeCode').isString(),
-], postController.OnCreatePost)
+], postController.OnCreatePostAdmin)
 router.get('/api/admin/storePost/delete/:code', AuthenticateAdmin, postController.OnDeletePost)
 router.get('/api/admin/storeProduct/delete/:code', AuthenticateAdmin, productController.OnDeleteProduct)
 router.post('/api/admin/store/updateConcept', AuthenticateAdmin, [
@@ -185,7 +192,7 @@ router.post('/api/admin/storeProduct/setRecommend', [
 ], AuthenticateAdmin, adminStoreController.OnSetProductRecommend)
 router.post('/api/admin/storeProduct/setPriority', AuthenticateAdmin, [
     check('productCode').isString().notEmpty(),
-    check('priority').isNumeric().notEmpty(),
+    check('priority').notEmpty(),
 ], adminStoreController.OnSetProductPriority)
 router.post('/api/admin/store/changePassword', [
     check('storeCode').isString(),
@@ -285,5 +292,14 @@ router.post('/api/admin/changeDisplayBanner', [
 //     check('position').isString(),
 //     check('display').isBoolean()
 // ], AuthenticateAdmin, adsController.OnChangeDisplayAds)
+router.post('/api/admin/resetPassword', [
+    check('username').isString(),
+    check('email').isString().isEmail()
+], userController.OnResetPassword)
+router.get('/api/admin/checkReset/:token', userController.OnCheckResetToken)
+router.post('/api/admin/updatePassword', [
+    check('newPassword').isString(),
+    check('token').isString()
+], userController.OnUpdateNewPassword)
 
 export const adminRouter = router

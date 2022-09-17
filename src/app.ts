@@ -14,7 +14,8 @@ import { memberRouter } from './routes/memberRouter'
 import cron = require('node-cron')
 import moment from 'moment'
 import fs from 'fs'
-
+import bodyParser from 'body-parser';
+ 
 /* เปิด SyncModels เมื่อเปลี่ยนแปลง Database Structure */
 // SyncModels.OnInit()
 
@@ -22,26 +23,30 @@ const app: Application = express()
 app.use(express.static(path.join(__dirname, './../dist/public/')))
 
 /*  -------- converting json -------- */  
-app.use(express.urlencoded({extended: true}))
-app.use(express.json())
+app.use(bodyParser.json({ limit: '100mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '100mb' }));
 
 /* Middleware */
 app.use((req: any, res: any, next: any) => {
+    console.log('access sever');
     res.setHeader('Access-Control-Allow-Origin', '*' )
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE')
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS, POST, PUT, PATCH, DELETE')
+    res.setHeader('Access-Control-Allow-Headers',  "Origin, X-Requested-With, Content-Type, Accept, Authorization")
     next()
 })
-
-/** router */
-app.use(memberRouter)
-app.use(adminRouter)
+  
+app.use(memberRouter) 
+app.use(adminRouter) 
 app.use(storeRouter)
 app.use(websiteRouter)
 app.use(videoRouter)
 
+app.use("/test", (req:any, res:any) => { 
+    res.status(200).json({message: "ok"}) 
+})
+
 /* Socket Start */
-const server = app.listen(socketPort)
+const server = app.listen(socketPort,'0.0.0.0')
 const io = SIO.init(server)
 
 /**------------- 0 0 * * * * -------------

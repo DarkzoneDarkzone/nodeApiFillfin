@@ -1,4 +1,4 @@
-import { Sequelize, DataTypes } from "Sequelize"
+import { Sequelize, DataTypes } from "sequelize"
 import { sequelize } from "../util/database"
 
 export const TokenLog = sequelize.define('TokenLog',
@@ -9,6 +9,10 @@ export const TokenLog = sequelize.define('TokenLog',
         type: DataTypes.INTEGER,
     },
     refresh_token: {
+        type: DataTypes.TEXT,
+        allowNull: false
+    },
+    reset_token: {
         type: DataTypes.TEXT,
         allowNull: false
     },

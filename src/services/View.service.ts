@@ -208,7 +208,7 @@ export class ViewService extends DBconnect {
                             ) as ord_product
                         ON (orders.order_number = ord_product.order_number)
                         JOIN orders_payment ON (orders_payment.order_number = orders.order_number)
-                ) as ord GROUP BY ord.order_number, ord.store_id) as store_order ORDER BY store_order.isRead ASC, store_order.createdAt DESC`
+                ) as ord GROUP BY ord.order_number) as store_order ORDER BY store_order.isRead ASC, store_order.createdAt DESC`
         return this.findAll(sql, [])
     }
     query_order_one = async(order_number: any, product_id: any) => {
@@ -258,12 +258,22 @@ export class ViewService extends DBconnect {
                         row_number() over (partition by chat_temp.member_code order by chat_temp.isRead ASC) AS priority 
                     FROM chat_temp 
                     JOIN members ON (chat_temp.member_code = members.member_code)
-                ) as chatMember 
+                ) as chatMember WHERE chatMember.from = "member"
                 GROUP BY chatMember.member_code`
         return this.findAll(sql, [])
     }
     queryPositionAll = async() => {
         sql = `SELECT position FROM ads GROUP BY position`
         return this.findAll(sql, [])
+    }
+    queryAdsShow = async(page: any) => {
+        sql = `SELECT *, GROUP_CONCAT(tt.img_path) as imgPath FROM (
+                    SELECT * 
+                    FROM ads 
+                    WHERE display ORDER BY priority ASC
+                ) as tt 
+                WHERE tt.position = ?
+                GROUP BY tt.position`
+        return this.findOne(sql, [page])
     }
 }

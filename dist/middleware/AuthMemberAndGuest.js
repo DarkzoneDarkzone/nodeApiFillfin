@@ -39,7 +39,6 @@ exports.AuthenticateMemberAndGuest = void 0;
 const Config = __importStar(require("../util/config"));
 const jwt = __importStar(require("jsonwebtoken"));
 const moment_1 = __importDefault(require("moment"));
-require("moment/locale/th");
 const AuthenticateMemberAndGuest = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const authHeader = req.get("Authorization");
     if (authHeader) {
@@ -62,6 +61,9 @@ const AuthenticateMemberAndGuest = (req, res, next) => __awaiter(void 0, void 0,
                 next();
             }
         }
+    }
+    else {
+        next();
     }
 });
 exports.AuthenticateMemberAndGuest = AuthenticateMemberAndGuest;

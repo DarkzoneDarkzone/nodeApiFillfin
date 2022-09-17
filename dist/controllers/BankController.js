@@ -10,12 +10,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BankController = void 0;
+const database_1 = require("./../util/database");
 const bankProvider_1 = require("./../models/bankProvider");
 const bankAccount_1 = require("./../models/bankAccount");
-require("moment/locale/th");
+const Bank_service_1 = require("../services/Bank.service");
 const express_validator_1 = require("express-validator");
 const sharp = require('sharp');
-const Bank_service_1 = require("../services/Bank.service");
 class BankController extends Bank_service_1.BankService {
     constructor() {
         super(...arguments);
@@ -38,20 +38,23 @@ class BankController extends Bank_service_1.BankService {
                 });
             }
             const finding_bank = yield bankAccount_1.BankAccount.findOne({ where: { bank_number: req.body.bank_number } });
-            if (!finding_bank) {
+            if (finding_bank) {
                 return res.status(404).json({
                     status: false,
                     message: 'error',
-                    description: 'data is not found.'
+                    description: 'bank number has duplicated..'
                 });
             }
+            const t = yield database_1.sequelize.transaction();
             try {
-                yield bankAccount_1.BankAccount.create({
+                const bank_account = yield bankAccount_1.BankAccount.create({
                     name: req.body.name,
-                    bank_account: req.body.bank_account,
+                    bank_number: req.body.bank_number,
                     branch: req.body.branch,
                     bank_provider_id: req.body.bank_provider_id,
-                });
+                    status: 'active'
+                }, { transaction: t });
+                yield t.commit();
                 return res.status(201).json({
                     status: true,
                     message: 'ok',
@@ -59,12 +62,33 @@ class BankController extends Bank_service_1.BankService {
                 });
             }
             catch (_a) {
+                yield t.rollback();
                 return res.status(500).json({
                     status: false,
                     message: 'error',
                     dscription: 'something went wrong.'
                 });
             }
+        });
+        this.OnChangeStatusBank = (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const errors = (0, express_validator_1.validationResult)(req);
+            if (!errors.isEmpty()) {
+                return res.status(400).json({
+                    status: false,
+                    message: 'error',
+                    errorMessage: errors.array()
+                });
+            }
+            const finding = yield bankAccount_1.BankAccount.update({
+                status: req.body.status
+            }, {
+                where: { id: req.body.bank_id }
+            });
+            return res.status(200).json({
+                status: true,
+                message: 'ok',
+                description: 'update bank success.'
+            });
         });
         this.OnUpdateBankAccount = (req, res) => __awaiter(this, void 0, void 0, function* () {
             const errors = (0, express_validator_1.validationResult)(req);
@@ -75,7 +99,7 @@ class BankController extends Bank_service_1.BankService {
                     errorMessage: errors.array()
                 });
             }
-            const finding = yield bankAccount_1.BankAccount.findOne({ where: { id: req.body.id } });
+            const finding = yield bankAccount_1.BankAccount.findOne({ where: { id: req.body.bank_id } });
             if (!finding) {
                 return res.status(404).json({
                     status: false,
@@ -88,6 +112,7 @@ class BankController extends Bank_service_1.BankService {
                 finding.bank_account = req.body.bank_account;
                 finding.branch = req.body.branch;
                 finding.bank_provider_id = req.body.bank_provider_id;
+                finding.save();
                 return res.status(201).json({
                     status: true,
                     message: 'ok',

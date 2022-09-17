@@ -102,7 +102,8 @@ export class StoreController extends ViewService{
                 username: req.body.username,
                 password: req.body.password,
                 gender: req.body.gender,
-                isStore: 'yes'
+                isStore: 'yes',
+                statusMember: 'active'
             }, { transaction: t })
             await t.commit()
             return res.status(201).json({
@@ -136,6 +137,13 @@ export class StoreController extends ViewService{
                 description: 'user was not found.'
             })
         }
+        // if(finding.status !== 'active'){
+        //     return res.status(400).json({
+        //         status: false,
+        //         message: 'error',
+        //         description: 'wait admin to verify.'
+        //     })
+        // }
         const isPasswordCorrect = await bcrypt.compare(req.body.password, finding.password)
         if(!isPasswordCorrect){
             return res.status(401).json({
@@ -176,6 +184,7 @@ export class StoreController extends ViewService{
             }) 
             const tokenLogging = await TokenLog.create({
                 refresh_token: refresh_token,
+                reset_token: '',
                 section: 'store',
                 active: true,
             })

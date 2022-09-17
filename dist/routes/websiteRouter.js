@@ -23,24 +23,22 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.packageRouter = void 0;
-const PackageController_1 = require("./../controllers/PackageController");
+exports.websiteRouter = void 0;
+const ContentController_1 = require("./../controllers/ContentController");
+const BannerController_1 = require("./../controllers/BannerController");
 const express_1 = require("express");
 const express_validator_1 = require("express-validator");
+const AdsController_1 = require("../controllers/AdsController");
 const multerUpload = __importStar(require("../util/multerUpload"));
 const upload = multerUpload.uploadImage();
 const router = (0, express_1.Router)();
-const packageController = new PackageController_1.PackageController();
-router.get('/api/package/get', packageController.OnGetPackageAll);
-router.get('/api/package/getOrder/:member_code', packageController.OnGetPackageOrder);
-router.get('/api/package/createOrder', [
-    (0, express_validator_1.check)('member_id').notEmpty(),
-    (0, express_validator_1.check)('gender').notEmpty().isString(),
-    (0, express_validator_1.check)('package_id').notEmpty(),
-], packageController.OnCreatePackageOrder);
-router.get('/api/package/createPayment', upload.single('slip'), [
-    (0, express_validator_1.check)('member_id').notEmpty(),
-    (0, express_validator_1.check)('gender').notEmpty().isString(),
-    (0, express_validator_1.check)('bank_ref').notEmpty(),
-], packageController.OnCreatePayment);
-exports.packageRouter = router;
+const adsController = new AdsController_1.AdsController();
+const bannerController = new BannerController_1.BannerController();
+const contentController = new ContentController_1.ContentController();
+router.get('/api/website/getSlide/:page', adsController.OnGetAds);
+router.post('/api/website/getBanner', [
+    (0, express_validator_1.check)('page').isString().notEmpty(),
+    (0, express_validator_1.check)('gender').isString().notEmpty()
+], bannerController.OnGetBanner);
+router.get('/api/website/content/:type', contentController.OnGetContent);
+exports.websiteRouter = router;

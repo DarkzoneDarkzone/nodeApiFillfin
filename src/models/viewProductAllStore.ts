@@ -1,4 +1,4 @@
-import { Sequelize, DataTypes, Model } from "Sequelize"
+import { Sequelize, DataTypes, Model } from "sequelize"
 import { sequelize } from "../util/database"
 
 export const ViewProductAllStore = sequelize.define('view_product_all_store',

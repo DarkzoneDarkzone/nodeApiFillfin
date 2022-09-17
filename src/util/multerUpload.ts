@@ -6,7 +6,6 @@ import moment from 'moment'
 export const uploadImage = () => {
   const storage = multer.diskStorage({
     destination: function (req: any, file:any , callback:any ){
-      console.log(file)
       var public_path = path.join(__dirname, '../../dist/public/')
       var newfolder = public_path+`uploads/${moment().format('YYYY')}/${moment().format('MM')}/`
       if(!fs.existsSync(`${newfolder}`)){

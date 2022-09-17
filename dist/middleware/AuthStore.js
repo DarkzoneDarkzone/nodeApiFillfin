@@ -39,7 +39,6 @@ exports.AuthenticateStore = void 0;
 const Config = __importStar(require("../util/config"));
 const jwt = __importStar(require("jsonwebtoken"));
 const moment_1 = __importDefault(require("moment"));
-require("moment/locale/th");
 const AuthenticateStore = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const authHeader = req.get("Authorization");
     if (!authHeader) {
@@ -61,6 +60,13 @@ const AuthenticateStore = (req, res, next) => __awaiter(void 0, void 0, void 0, 
                     status: false,
                     message: 'error',
                     description: 'token was expired.'
+                });
+            }
+            if (decodedToken.section !== 'store') {
+                return res.status(401).json({
+                    status: false,
+                    message: 'error',
+                    description: 'not have permission.'
                 });
             }
             /* data keep for use when update data in database */

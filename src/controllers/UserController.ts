@@ -1,7 +1,5 @@
 import { TokenLog } from './../models/tokenLog';
 import { Log } from './../models/log';
-import { Website } from './../models/website';
-import { Store } from './../models/store';
 import * as Config from '../util/config'
 import moment from 'moment'
 import bcrypt from 'bcrypt'
@@ -11,6 +9,10 @@ import path from 'path'
 import { validationResult } from 'express-validator'
 import * as jwt from 'jsonwebtoken'
 import { User } from '../models/users'
+
+import nodemailer from 'nodemailer';
+import { Settings } from '../models/settings';
+const hbs = require('nodemailer-express-handlebars')
 
 export class UserController {
     OnRegister = async(req: any, res: any) => {
@@ -143,18 +145,11 @@ export class UserController {
                 description: 'username was not found.'
             })
         }
-        if(finding.status_confirm === 'pending'){
-            return res.status(401).json({
-                status: false,
-                message: 'error',
-                description: 'please waiting admin to approve.'
-            })
-        }
         if(finding.status !== 'active'){
             return res.status(401).json({
                 status: false,
                 message: 'error',
-                description: 'please contract admin to verify.'
+                description: 'please contract admin to approve.'
             })
         }
         try {
@@ -188,18 +183,19 @@ export class UserController {
             finding.access_token = access_token
             finding.refresh_token = refresh_token
             finding.save()
-            const ip = req.ip.split(':')[3]
+            // const ip = req.ip.split(':')[3]
             const userAgent = req.headers['user-agent']
             const logging = await Log.create({
                 user_code: finding.users_code,
                 refresh_token: refresh_token,
                 details: userAgent,
-                ip_address: ip,
+                ip_address: req.ip,
                 section: 'admin',
                 status: 'active',
             }) 
             const tokenLogging = await TokenLog.create({
                 refresh_token: refresh_token,
+                reset_token: '',
                 section: 'admin',
                 active: true,
             })
@@ -208,9 +204,12 @@ export class UserController {
                 message: 'ok',
                 description: 'password has checked.',
                 access_token: access_token,
-                refresh_token: refresh_token
+                refresh_token: refresh_token,
+                profileImg: finding.profile_img,
+                adminName: finding.display_name
             })
         } catch(error){
+            console.log(error)
             return res.status(500).json({
                 status: false,
                 message: 'error',
@@ -421,6 +420,147 @@ export class UserController {
                 message: 'error',
                 description: 'something went wrong.'
             })
+        }
+    }
+    OnResetPassword = async(req: any, res: any) => {
+        const errors = validationResult(req)
+        if(!errors.isEmpty()){
+            return res.status(400).json({
+                status: false,
+                message: 'error',
+                errorMessage: errors.array()
+            })
+        }
+        const mailSenderUser = await Settings.findOne({where:{setting_name: 'email_user'}})
+        const mailSenderPwd = await Settings.findOne({where:{setting_name: 'email_password'}})
+        var transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: mailSenderUser.setting_value,
+                pass: mailSenderPwd.setting_value
+            }
+        });
+        // point to the template folder
+        const handlebarOptions = {
+            viewEngine: {
+                partialsDir: path.resolve('./dist/views/'),
+                defaultLayout: false,
+            },
+            viewPath: path.resolve('./dist/views/'),
+        };
+        // use a template file with nodemailer
+        transporter.use('compile', hbs(handlebarOptions))
+        const users_reset = Math.random().toString().substr(2, 8)+moment().unix()
+        try{
+            const finding = await User.findOne({where:{username: req.body.username}})
+            if(!finding){
+                return res.status(404).json({
+                    status: false,
+                    message: 'error',
+                    description: 'admin was not found.'
+                })
+            }
+            const tokenLogging = await TokenLog.create({
+                refresh_token: '',
+                reset_token: finding.users_code,
+                section: 'resetpassword',
+                active: true,
+            })
+            var mailOptions = {
+                from: '"Wynnsoft Support" <foo@example.com>', // sender address
+                to: req.body.email, // list of receivers
+                subject: "Reset password",
+                template: 'email', // the name of the template file i.e email.handlebars
+                context:{
+                    name: finding.username, // replace {{name}} with Adebola
+                    company: 'Fillfiin', // replace {{company}} with My Company
+                    linkUrl: `https://backoffice.fillfin.com/forgetPassword?token=${finding.users_code}`
+                }
+            };
+            // trigger the sending of the E-mail
+            transporter.sendMail(mailOptions, function(error){
+                if(error){
+                    console.log(error)
+                }
+            });
+            return res.status(200).json({
+                status: true,
+                message: 'ok',
+                description: 'sending mail success.'
+            })
+        } catch(error){
+            console.log(error)
+            return res.status(500).json({
+                status: false,
+                message: 'error',
+                description: 'something went wrong.'
+            })
+        }
+    }
+    OnCheckResetToken = async(req: any, res: any) => {
+        const errors = validationResult(req)
+        if(!errors.isEmpty()){
+            return res.status(400).json({
+                status: false,
+                message: 'error',
+                errorMessage: errors.array()
+            })
+        }
+        try {
+            const finding = await TokenLog.findOne({where: {reset_token: req.params.token, section: 'resetpassword'}})
+            if(!finding){
+                return res.status(400).json({
+                    status: false,
+                    message: 'error',
+                    description: 'can not reset password.'
+                })
+            }
+            return res.status(200).json({
+                status: true,
+                message: 'ok',
+                description: 'reset token has correct.'
+            })
+        } catch(error){
+            return res.status(500).json({
+                status: false,
+                message: 'error',
+                description: 'something went wrong..'
+            })
+        }
+        
+    }
+    OnUpdateNewPassword = async(req: any, res: any) => {
+        const errors = validationResult(req)
+        if(!errors.isEmpty()){
+            return res.status(400).json({
+                status: false,
+                message: 'error',
+                errorMessage: errors.array()
+            })
+        }
+        const finding = await User.findOne({where:{users_code: req.body.token}})
+        if(!finding){
+            return res.status(404).json({
+                status: false,
+                message: 'error',
+                description: 'admin was not found.'
+            })
+        }
+        try {
+            const hashPass = await bcrypt.hash(req.body.newPassword, 10)
+            finding.password = hashPass
+            finding.save()
+            return res.status(200).json({
+                status: true,
+                message: 'ok',
+                description: 'password has changed.'
+            })
+        } catch(error){
+            return res.status(500).json({
+                status: false,
+                message: 'error',
+                description: 'something went wrong.'
+            })    
         }
     }
 }

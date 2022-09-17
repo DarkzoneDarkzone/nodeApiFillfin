@@ -8,7 +8,6 @@ const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const multer_1 = __importDefault(require("multer"));
 const moment_1 = __importDefault(require("moment"));
-require("moment/locale/th");
 const uploadImage = () => {
     const storage = multer_1.default.diskStorage({
         destination: function (req, file, callback) {
@@ -29,13 +28,13 @@ const uploadImage = () => {
         storage: storage,
         fileFilter: function (req, file, callback) {
             var ext = path_1.default.extname(file.originalname);
-            if (ext !== '.png' && ext !== '.jpg' && ext !== '.webp' && ext !== '.jpeg') {
-                return callback(new Error('Only images are allowed'));
+            if (ext !== '.png' && ext !== '.jpg' && ext !== '.webp' && ext !== '.jpeg' && ext !== '.mp4' && ext !== '.mov' && ext !== '.avi') {
+                return callback(new Error("Type images or video aren't allowed"));
             }
             callback(null, true);
         },
         limits: {
-            fileSize: (1048576 * 10)
+            fileSize: (1048576 * 100) // 100MB
         }
     });
 };

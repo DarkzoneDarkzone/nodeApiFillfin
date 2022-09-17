@@ -29,7 +29,8 @@ export class ContentController extends ViewService {
                 h1: finding.h1,
                 h2: finding.h2,
                 videoLink: finding.video_link,
-                imageLink: finding.image_link
+                imageLink: finding.image_link,
+                isFile: finding.isFile,
             }
         }
         return res.status(200).json({
@@ -98,7 +99,7 @@ export class ContentController extends ViewService {
                     originalname = originalname.split('(')[0]
                     originalname += '('+i+')'
                 }
-                const path_upload = "video"+dest[1]+originalname+ext
+                const path_upload = "/video"+dest[1]+originalname+ext
                 fs.copyFile(req.file.path, dest[0]+path_upload, (err) => {
                     if(err){
                         console.log(err)
@@ -141,29 +142,28 @@ export class ContentController extends ViewService {
         }
         try {
             if(req.file){
-                let dest = req.file.destination.split("uploads")
+                let upload = "/uploads"+req.file.destination.split("uploads").pop()
+                let dest = req.file.destination
                 var ext = path.extname(req.file.originalname)
                 let originalname = path.basename(req.file.originalname, ext)
-                const newfolder = `${dest[0]}video${dest[1]}`
-                if(!fs.existsSync(newfolder)){
-                    fs.mkdirSync(newfolder, { recursive: true })
-                } 
-                for(let i = 1; fs.existsSync(newfolder+originalname+ext); i++){
+                for(let i = 1; fs.existsSync(dest+originalname+ext); i++){
                     originalname = originalname.split('(')[0]
                     originalname += '('+i+')'
                 }
-                const path_upload = "video"+dest[1]+originalname+ext
-                fs.copyFile(req.file.path, dest[0]+path_upload, (err) => {
-                    if(err){
-                        console.log(err)
-                    }
+                const image = await sharp(req.file.path)
+                .resize(500, 500)
+                .withMetadata()
+                .jpeg({ quality: 95})
+                .toFile( path.resolve(req.file.destination, originalname+ext))
+                .then((data: any) => {
+                    fs.unlink( req.file.path, (err) => {
+                        if(err){
+                            console.log(err)
+                        }
+                    })
+                    return upload+originalname+ext
                 })
-                fs.unlink( req.file.path, (err) => {
-                    if(err){
-                        console.log(err)
-                    }
-                })
-                website.image_link = path_upload
+                website.image_link = image
             }
             website.type = req.body.type
             website.title = req.body.title
@@ -172,9 +172,65 @@ export class ContentController extends ViewService {
             website.h2 = req.body.h2
             website.save()
             return res.status(201).json({
-                sttaus: true,
+                status: true,
                 message: 'ok',
                 description: 'content was updated.'
+            })
+        } catch(error){
+            return res.status(500).json({
+                status: false,
+                message: 'error',
+                description: 'something went wrong.'
+            })
+        }
+    }
+    OnChangeVideoContent = async(req: any, res: any) => {
+        const website = await Website.findOne({where:{id: req.body.id}})
+        if(!website){
+            return res.status(404).json({
+                status: false,
+                message: 'error',
+                description: 'content was not found.'
+            })
+        }
+        try {
+            if(req.body.isFile === "true"){
+                if(req.file){
+                    let dest = req.file.destination.split("uploads")
+                    var ext = path.extname(req.file.originalname)
+                    let originalname = path.basename(req.file.originalname, ext)
+                    const newfolder = `${dest[0]}video${dest[1]}`
+                    if(!fs.existsSync(newfolder)){
+                        fs.mkdirSync(newfolder, { recursive: true })
+                    } 
+                    for(let i = 1; fs.existsSync(newfolder+originalname+ext); i++){
+                        originalname = originalname.split('(')[0]
+                        originalname += '('+i+')'
+                    }
+                    const path_upload = "video"+dest[1]+originalname+ext
+                    fs.copyFile(req.file.path, dest[0]+path_upload, (err) => {
+                        if(err){
+                            console.log(err)
+                        }
+                    })
+                    fs.unlink( req.file.path, (err) => {
+                        if(err){
+                            console.log(err)
+                        }
+                    })
+                    website.video_link = path_upload
+                    website.isFile = req.body.isFile
+                    website.save()
+                }
+            } else {
+                website.video_link = req.body.pathUrl
+                website.isFile = req.body.isFile
+                website.save()
+            }
+            return res.status(201).json({
+                status: true,
+                message: 'ok',
+                description: 'video content was updated.'
             })
         } catch(error){
             return res.status(500).json({

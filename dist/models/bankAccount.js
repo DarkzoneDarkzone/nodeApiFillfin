@@ -1,32 +1,32 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BankAccount = void 0;
-const Sequelize_1 = require("Sequelize");
+const sequelize_1 = require("sequelize");
 const database_1 = require("../util/database");
 exports.BankAccount = database_1.sequelize.define('BankAccount', {
     id: {
         autoIncrement: true,
         primaryKey: true,
-        type: Sequelize_1.DataTypes.INTEGER,
+        type: sequelize_1.DataTypes.INTEGER,
     },
     name: {
-        type: Sequelize_1.DataTypes.STRING(255),
+        type: sequelize_1.DataTypes.STRING(255),
         allowNull: false,
     },
     bank_number: {
-        type: Sequelize_1.DataTypes.STRING(40),
+        type: sequelize_1.DataTypes.STRING(40),
         allowNull: false,
     },
     branch: {
-        type: Sequelize_1.DataTypes.STRING(255),
+        type: sequelize_1.DataTypes.STRING(255),
         allowNull: false,
     },
     bank_provider_id: {
-        type: Sequelize_1.DataTypes.INTEGER,
+        type: sequelize_1.DataTypes.INTEGER,
         allowNull: false,
     },
     status: {
-        type: Sequelize_1.DataTypes.STRING(10),
+        type: sequelize_1.DataTypes.STRING(10),
         allowNull: false,
     }
 }, {

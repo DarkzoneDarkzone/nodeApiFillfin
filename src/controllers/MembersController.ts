@@ -9,7 +9,6 @@ import moment from 'moment'
 import bcrypt from 'bcrypt'
 import { validationResult } from 'express-validator'
 import { Log } from '../models/log';
-import { transformArguments } from '@redis/search/dist/commands/AGGREGATE';
 
 export class MembersController extends ViewService {
     OnGetAll = async(req: any, res: any) => {
@@ -40,6 +39,13 @@ export class MembersController extends ViewService {
                 description: 'member was not found.'
             })
         }
+        if(finding.statusMember !== 'active'){
+            return res.status(400).json({
+                status: false,
+                message: 'error',
+                description: 'member was not active.'
+            })
+        }
         /** check password */
         if(!(req.body.password == finding.password)){
             return res.status(401).json({
@@ -58,7 +64,7 @@ export class MembersController extends ViewService {
                 username: finding.username,
                 gender: finding.gender,
                 at: new Date().getTime()
-            }, `${Config.secretKey}`, { expiresIn: '10m' })
+            }, `${Config.secretKey}`, { expiresIn: '30m' })
             const refresh_token = jwt.sign({
                 username: finding.username,
                 gender: finding.gender,
@@ -69,18 +75,18 @@ export class MembersController extends ViewService {
             finding.access_token = access_token
             finding.refresh_token = refresh_token
             finding.save()
-            const ip = req.ip.split(':')[3]
             const userAgent = req.headers['user-agent']
             const logging = await Log.create({
                 user_code: finding.member_code,
                 refresh_token: refresh_token,
                 details: userAgent,
-                ip_address: ip,
+                ip_address: req.ip,
                 section: 'member',
                 status: 'active',
             }) 
             const tokenLogging = await TokenLog.create({
                 refresh_token: refresh_token,
+                reset_token: "",
                 section: 'member',
                 active: true,
             })
@@ -229,7 +235,7 @@ export class MembersController extends ViewService {
                 username: finding.username,
                 gender: finding.gender,
                 at: new Date().getTime()
-            }, `${Config.secretKey}`, {expiresIn: '10m'})
+            }, `${Config.secretKey}`, {expiresIn: '30m'})
             finding.access_token = access_token
             finding.save()
             return res.status(200).json({

@@ -1,4 +1,4 @@
-import { Sequelize, DataTypes } from "Sequelize"
+import { Sequelize, DataTypes } from "sequelize"
 import { sequelize } from "../util/database"
 
 export const OrdersProduct = sequelize.define('OrdersProduct',
@@ -25,6 +25,10 @@ export const OrdersProduct = sequelize.define('OrdersProduct',
         allowNull: false,
     },
     price: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+    },
+    gross_profit: {
         type: DataTypes.INTEGER,
         allowNull: false,
     },

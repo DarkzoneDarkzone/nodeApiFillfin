@@ -77,13 +77,13 @@ export class AdminManageController {
         }
         try {
             const finding = await User.findOne({where:{ users_code: req.body.adminCode }})
-            if(finding.permission !== 1){
-                return res.status(405).json({
-                    status: false,
-                    message: 'error',
-                    description: "Don't have permission"
-                })
-            }
+            // if(finding.permission !== 1){
+            //     return res.status(405).json({
+            //         status: false,
+            //         message: 'error',
+            //         description: "Don't have permission"
+            //     })
+            // }
             finding.password = await bcrypt.hash(req.body.newPassword, 10)
             finding.save()
             return res.status(200).json({

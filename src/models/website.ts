@@ -1,4 +1,4 @@
-import { Sequelize, DataTypes } from "Sequelize"
+import { Sequelize, DataTypes } from "sequelize"
 import { sequelize } from "../util/database"
 
 export const Website = sequelize.define('Website',
@@ -39,6 +39,11 @@ export const Website = sequelize.define('Website',
     display: {
         type: DataTypes.STRING(10),
         allowNull: false,
+    },
+    isFile: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false
     },
     priority: {
         type: DataTypes.INTEGER,

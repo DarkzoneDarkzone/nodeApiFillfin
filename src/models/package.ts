@@ -1,4 +1,4 @@
-import { Sequelize, DataTypes } from "Sequelize"
+import { Sequelize, DataTypes } from "sequelize"
 import { sequelize } from "../util/database"
 
 export const Package = sequelize.define('Package',

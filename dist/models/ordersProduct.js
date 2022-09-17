@@ -1,36 +1,40 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.OrdersPayment = void 0;
-const Sequelize_1 = require("Sequelize");
+exports.OrdersProduct = void 0;
+const sequelize_1 = require("sequelize");
 const database_1 = require("../util/database");
-exports.OrdersPayment = database_1.sequelize.define('OrdersPayment', {
+exports.OrdersProduct = database_1.sequelize.define('OrdersProduct', {
     id: {
         autoIncrement: true,
-        type: Sequelize_1.DataTypes.INTEGER,
+        type: sequelize_1.DataTypes.INTEGER,
         primaryKey: true
     },
     order_number: {
-        type: Sequelize_1.DataTypes.STRING(255),
+        type: sequelize_1.DataTypes.STRING(255),
         allowNull: false
     },
     product_id: {
-        type: Sequelize_1.DataTypes.INTEGER,
+        type: sequelize_1.DataTypes.INTEGER,
         allowNull: false
     },
     product_name: {
-        type: Sequelize_1.DataTypes.STRING(255),
+        type: sequelize_1.DataTypes.STRING(255),
         allowNull: false,
     },
     product_content: {
-        type: Sequelize_1.DataTypes.TEXT,
+        type: sequelize_1.DataTypes.TEXT,
         allowNull: false,
     },
     price: {
-        type: Sequelize_1.DataTypes.INTEGER,
+        type: sequelize_1.DataTypes.INTEGER,
         allowNull: false,
     },
-    incart: {
-        type: Sequelize_1.DataTypes.STRING(10),
+    gross_profit: {
+        type: sequelize_1.DataTypes.INTEGER,
+        allowNull: false,
+    },
+    status: {
+        type: sequelize_1.DataTypes.STRING(10),
         allowNull: false,
     },
 }, {

@@ -55,7 +55,7 @@ export class OrderController extends ViewService{
                     product_name: (data.premium==='yes')?data.name_premium:data.name_member,
                     status: 'pending',
                     product_content: (data.premium==='yes')?data.content_premium:data.content_member,
-                    gross_profit: (data.recommend==='yes')?parseInt(gp_recommend.value):parseInt(packages.gross_profit),
+                    gross_profit: (data.recommend==='yes')?parseInt(gp_recommend.setting_value):parseInt(packages.gross_profit),
                     price: (data.premium==='yes')?data.price_premium:data.price_standard
                 }
                 totalPrice += order_data.price
@@ -141,7 +141,7 @@ export class OrderController extends ViewService{
                 slip: slip,
                 status_confirm: 'pending',
                 name: '',//req.body.name_payment,
-                total_pay: '', //req.body.totalpay_payment,
+                total_pay: 0, //req.body.totalpay_payment,
                 date_pay: new Date(), //req.body.date_pay,
             }, { transaction: t })
             await t.commit()
@@ -153,9 +153,10 @@ export class OrderController extends ViewService{
         } catch(error){
             await t.rollback();
             return res.status(500).json({
-                status: false,
-                message: 'error',
-                description: 'something went wrong.'
+                status: true,
+                message: 'ok',
+                description: 'something went wrong.',
+                error: error
             })
         }
     }

@@ -23,5 +23,7 @@ export const AuthenticateMemberAndGuest = async (req: any, res: any, next: any) 
                 next()
             }
         }
+    }else{
+        next()
     }
 }

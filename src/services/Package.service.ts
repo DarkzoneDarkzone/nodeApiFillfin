@@ -27,25 +27,38 @@ export class PackageService extends DBconnect {
     }
     query_package_order = async() => {
         sql = `SELECT * FROM 
-                (   SELECT pack.*, members.username
-                    FROM (SELECT package_order.pack_order_id as paymentId,
-                                package.*, 
-                                package_order.begin, 
-                                package_order.expire, 
-                                package_order.status_expire, 
-                                package_order.status_confirm, 
-                                package_order.status_payment, 
-                                package_order.member_id, 
-                                package_payment.slip, 
-                                package_payment.status_confirm as paymentStatus,
-                                package_payment.user_confirm,
-                                package_payment.bank_ref
-                            FROM package_order
-                            JOIN package ON (package_order.package_id = package.package_id)
-                            JOIN package_payment ON (package_order.pack_order_id = package_payment.package_order_id)
-                        ) AS pack
-                    INNER JOIN members ON (pack.member_id = members.id AND pack.gender = members.gender)
-                ) as orders ORDER BY orders.createdAt DESC`
+            (SELECT pack.*, members.username
+            FROM (SELECT package_order.pack_order_id as paymentId,
+                    package.pack_id,
+                    package.package_id,
+                    package.name,
+                    package.day,
+                    package.image,
+                    package.content,
+                    package.price,
+                    package.gender,
+                    package.gross_profit,
+                    package.premium,
+                    package.priority,
+                    package.display,
+                    package_order.begin, 
+                    package_order.expire, 
+                    package_order.status_expire, 
+                    package_order.status_confirm, 
+                    package_order.status_payment, 
+                    package_order.member_id,
+                    package_order.createdAt,
+                    package_order.updatedAt,
+                    package_payment.slip, 
+                    package_payment.status_confirm as paymentStatus,
+                    package_payment.user_confirm,
+                    package_payment.bank_ref
+                FROM package_order
+                JOIN package ON (package_order.package_id = package.package_id)
+                JOIN package_payment ON (package_order.pack_order_id = package_payment.package_order_id)
+                ) AS pack
+                INNER JOIN members ON (pack.member_id = members.id AND pack.gender = members.gender)
+            ) as orders ORDER BY orders.createdAt DESC`
         return this.findAll(sql, [])
     }
 }

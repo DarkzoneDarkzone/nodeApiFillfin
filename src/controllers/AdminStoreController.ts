@@ -52,8 +52,8 @@ export class AdminStoreController extends ViewService {
                 content_member: req.body.content_member,
                 name_premium: req.body.name_premium,
                 content_premium: req.body.content_premium,
-                price_standard: req.body.price_standard,
-                price_premium: req.body.price_premium,
+                price_standard: parseInt(req.body.price_standard),
+                price_premium: parseInt(req.body.price_premium),
                 recommend: "no",
                 pre_order: "no",
                 status: 'active',
@@ -93,6 +93,7 @@ export class AdminStoreController extends ViewService {
                         hover: (count==1)?"yes":"no",
                         display: "yes",
                         premium: "no",
+                        member_type: ''
                     }
                     count++
                     productImage.push(arr)
@@ -127,6 +128,7 @@ export class AdminStoreController extends ViewService {
                         hover: "no",
                         display: "yes",
                         premium: "yes",
+                        member_type: ''
                     }
                     count++
                     productImage.push(arr)
@@ -168,7 +170,7 @@ export class AdminStoreController extends ViewService {
         const product_str = store_profile.id + Math.random().toString().substr(2, 10)+moment().unix()
         const product_code = await bcrypt.hash(product_str, 10)
         const prod_most_prior = await Product.findOne({
-            where:{store_id: store_profile.id, pro_order: 'yes', status: 'active'},
+            where:{store_id: store_profile.id, pre_order: 'yes', status: 'active'},
             order: [
                 ['priority', 'DESC']
             ]
@@ -181,8 +183,8 @@ export class AdminStoreController extends ViewService {
                 content_member: '',
                 name_premium: req.body.name_premium,
                 content_premium: req.body.content_premium,
-                price_standard: req.body.price_premium,
-                price_premium: req.body.price_premium,
+                price_standard: parseInt(req.body.price_premium),
+                price_premium: parseInt(req.body.price_premium),
                 recommend: "no",
                 pre_order: "yes",
                 status: 'active',
@@ -221,6 +223,7 @@ export class AdminStoreController extends ViewService {
                         hover: "no",
                         display: "yes",
                         premium: "yes",
+                        member_type: ''
                     }
                     productImage.push(arr)
                 }
@@ -386,7 +389,7 @@ export class AdminStoreController extends ViewService {
         }
     }
     OnSetProductPriority = async(req: any, res: any) => {
-        const errors = validationResult(req)
+        const errors = validationResult(req.body)
         if(!errors.isEmpty()){
             return res.status(400).json({
                 status: false,
