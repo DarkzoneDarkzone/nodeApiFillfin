@@ -309,7 +309,8 @@ export class OrderController extends ViewService{
                 note: data.note,
                 slip: data.slip,
                 isRead: data.isRead?true:false,
-                product: arr_product
+                username: data.username,
+                product: arr_product,
             }
         })
         return res.status(200).json({

@@ -262,13 +262,13 @@ export class AdminStoreController extends ViewService {
             })
         }
         const all_post = await Post.findAll({where:{store_id: store.id, status: 'active'}})
-        if(all_post.length > 10){
-            return res.status(400).json({
-                status: false,
-                message: 'error',
-                description: 'your post has limited.'
-            })
-        }
+        // if(all_post.length > 10){
+        //     return res.status(400).json({
+        //         status: false,
+        //         message: 'error',
+        //         description: 'your post has limited.'
+        //     })
+        // }
         const t = await sequelize.transaction()
         try {
             const str_post_code = `${store.code}${moment().format('YYYYMMDDHHmmss')}`

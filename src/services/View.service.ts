@@ -29,7 +29,7 @@ export class ViewService extends DBconnect {
     }
     query_store_post = async (store_id: any) => {
         sql = `SELECT * FROM 
-                (   SELECT store_post.*, GROUP_CONCAT(post_image.path_image) as post_img, row_number() OVER (ORDER BY post_image.priority ASC) as priority
+                (SELECT store_post.*, GROUP_CONCAT(post_image.path_image) as post_img, row_number() OVER (ORDER BY post_image.priority ASC) as priority
                     FROM (
                         SELECT post.*,
                             store.name as store_name,
@@ -42,7 +42,7 @@ export class ViewService extends DBconnect {
                     GROUP BY store_post.id
                 ) as posts
                 WHERE posts.store_id = ?
-                ORDER BY posts.createdAt DESC`
+                ORDER BY posts.createdAt DESC LIMIT 10`
         return this.findAll(sql, [store_id])
     }
     query_product_incart = async (member_id: any, ) => {
@@ -162,7 +162,7 @@ export class ViewService extends DBconnect {
     query_admin_order = async() => {
         sql = `SELECT * FROM 
                     (SELECT order_number, payment_status, status, totalprice, netprice, member_id, createdAt,
-                        updatedAt, name, address, phone, district, subdistrict, province, code, note, store_id, slip, isRead,
+                        updatedAt, name, address, phone, district, subdistrict, province, code, note, store_id, slip, isRead, username,
                         GROUP_CONCAT(product_id) as product_id,
                         GROUP_CONCAT(product_name) as product_name,
                         GROUP_CONCAT(product_content) as product_content,
@@ -190,7 +190,8 @@ export class ViewService extends DBconnect {
                         ord_product.path_img as product_image,
                         orders_payment.slip,
                         ord_product.recommend,
-                        ord_product.pre_order
+                        ord_product.pre_order,
+                        members.username
                     FROM orders 
                         JOIN orders_address ON (orders.order_number = orders_address.order_number)
                         JOIN 
@@ -208,6 +209,7 @@ export class ViewService extends DBconnect {
                             ) as ord_product
                         ON (orders.order_number = ord_product.order_number)
                         JOIN orders_payment ON (orders_payment.order_number = orders.order_number)
+                        JOIN members ON (orders.member_id = members.id)
                 ) as ord GROUP BY ord.order_number) as store_order ORDER BY store_order.isRead ASC, store_order.createdAt DESC`
         return this.findAll(sql, [])
     }
