@@ -64,6 +64,10 @@ export const Product = sequelize.define('Product',
         type: DataTypes.INTEGER,
         allowNull: false,
     },
+    priority_recommend: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+    },
 }, {
     sequelize,
     tableName: 'product',

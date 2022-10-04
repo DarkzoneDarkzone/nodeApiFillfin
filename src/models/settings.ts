@@ -16,6 +16,10 @@ export const Settings = sequelize.define('Settings',
         type: DataTypes.STRING(255),
         allowNull: false
     },
+    image: {
+        type: DataTypes.STRING(255),
+        allowNull: true
+    },
     display: {
         type: DataTypes.STRING(20),
         allowNull: false

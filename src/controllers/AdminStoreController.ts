@@ -172,7 +172,7 @@ export class AdminStoreController extends ViewService {
         const prod_most_prior = await Product.findOne({
             where:{store_id: store_profile.id, pre_order: 'yes', status: 'active'},
             order: [
-                ['priority', 'DESC']
+                ['priority_recommend', 'DESC']
             ]
         })
         const t = await sequelize.transaction()
@@ -191,7 +191,8 @@ export class AdminStoreController extends ViewService {
                 sex: store_profile.gender,
                 clip: req.body.clip,
                 store_id: store_profile.id,
-                priority: (prod_most_prior)?prod_most_prior.priority+1:0
+                priority: 0,
+                priority_recommend: (prod_most_prior)?prod_most_prior.priority+1:0
             }, { transaction: t })
             let productImage: any[] = []
             if(req.files.premium){
@@ -362,69 +363,6 @@ export class AdminStoreController extends ViewService {
             })
         }
     }
-    OnSetProductRecommend = async(req: any,  res: any) => {
-        const errors = validationResult(req)
-        if(!errors.isEmpty()){
-            return res.status(400).json({
-                status: false,
-                message: 'error',
-                errorMessage: errors.array()
-            })
-        }
-        const product = await Product.findOne({where:{product_code: req.body.productCode}})
-        try {
-            product.recommend = req.body.recommend
-            product.save()
-            return res.status(200).json({
-                status: true,
-                message: 'ok',
-                description: 'product status was updated.'
-            })
-        } catch(error){
-            return res.status(500).json({
-                status: false,
-                message: 'error',
-                description: 'something went wrong.'
-            })
-        }
-    }
-    OnSetProductPriority = async(req: any, res: any) => {
-        const errors = validationResult(req.body)
-        if(!errors.isEmpty()){
-            return res.status(400).json({
-                status: false,
-                message: 'error',
-                errorMessage: errors.array()
-            })
-        }
-        const product = await Product.findOne({where:{product_code: req.body.productCode}})
-        try {
-            const updateAds = await Product.update(
-                {
-                    priority: sequelize.literal('priority + 1'),
-                },{
-                    where: {
-                        store_id: product.store_id,
-                        pre_order: product.pre_order,
-                        priority: { [Op.gte]: req.body.priority},
-                        status: 'active'
-                    }
-                })
-            product.priority = req.body.priority
-            product.save()
-            return res.status(200).json({
-                status: true,
-                message: 'ok',
-                description: 'product was updated.'
-            })
-        } catch(error){
-            return res.status(500).json({
-                status: false,
-                message: 'error',
-                description: 'something went wrong.'
-            })
-        }
-    }
     OnGetStoreDetails = async(req: any, res: any) => {
         const adminToken = req.adminToken
         const store = await Store.findOne({
@@ -496,5 +434,141 @@ export class AdminStoreController extends ViewService {
                 review: review
             }
         })
+    }
+    OnSetProductRecommend = async(req: any,  res: any) => {
+        const errors = validationResult(req)
+        if(!errors.isEmpty()){
+            return res.status(400).json({
+                status: false,
+                message: 'error',
+                errorMessage: errors.array()
+            })
+        }
+        const product = await Product.findOne({where:{product_code: req.body.productCode}})
+        try {
+            product.recommend = req.body.recommend
+            product.save()
+            return res.status(200).json({
+                status: true,
+                message: 'ok',
+                description: 'product status was updated.'
+            })
+        } catch(error){
+            return res.status(500).json({
+                status: false,
+                message: 'error',
+                description: 'something went wrong.'
+            })
+        }
+    }
+    OnSetProductPriority = async(req: any, res: any) => {
+        const errors = validationResult(req.body)
+        if(!errors.isEmpty()){
+            return res.status(400).json({
+                status: false,
+                message: 'error',
+                errorMessage: errors.array()
+            })
+        }
+        const product = await Product.findOne({where:{product_code: req.body.productCode}})
+        try {
+            const updateAds = await Product.update(
+                {
+                    priority: sequelize.literal('priority + 1'),
+                },{
+                    where: {
+                        store_id: product.store_id,
+                        // pre_order: product.pre_order,
+                        priority: { [Op.gte]: req.body.priority},
+                        status: 'active'
+                    }
+                })
+            product.priority = req.body.priority
+            product.save()
+            return res.status(200).json({
+                status: true,
+                message: 'ok',
+                description: 'product was updated.'
+            })
+        } catch(error){
+            return res.status(500).json({
+                status: false,
+                message: 'error',
+                description: 'something went wrong.'
+            })
+        }
+    }
+
+    /*** for product recommend */
+    OnSetProductPriorityRecommend = async(req: any, res: any) => {
+        const errors = validationResult(req.body)
+        if(!errors.isEmpty()){
+            return res.status(400).json({
+                status: false,
+                message: 'error',
+                errorMessage: errors.array()
+            })
+        }
+        const product = await Product.findOne({where:{product_code: req.body.productCode}})
+        try {
+            const updateAds = await Product.update(
+                {
+                    priority: sequelize.literal('priority_recommend + 1'),
+                },{
+                    where: {
+                        // pre_order: product.pre_order,
+                        sex: req.body.sex,
+                        priority: { [Op.gte]: req.body.priority_recommend},
+                        status: 'active'
+                    }
+                })
+            product.priority_recommend = req.body.priority_recommend
+            product.save()
+            return res.status(200).json({
+                status: true,
+                message: 'ok',
+                description: 'product was updated.'
+            })
+        } catch(error){
+            return res.status(500).json({
+                status: false,
+                message: 'error',
+                description: 'something went wrong.'
+            })
+        }
+    }
+    OnGetProductRecommend = async(req: any, res: any) => {
+        const errors = validationResult(req)
+        if(!errors.isEmpty()){
+            return res.status(400).json({
+                status: false,
+                message: 'error',
+                errorMessage: errors.array()
+            })
+        }
+        try {
+            const product = await Product.findOne({
+                where:{
+                    recommend: 'yes', 
+                    status: 'active',
+                    sex: req.params.sex
+                },
+                order: [
+                    ['priority_recommend', 'ASC']
+                ]
+            })
+            return res.status(200).json({
+                status: true,
+                message: 'ok',
+                description: 'product was updated.',
+                product_pre: product
+            })
+        } catch(error){
+            return res.status(500).json({
+                status: false,
+                message: 'error',
+                description: 'something went wrong.'
+            })
+        }
     }
 }

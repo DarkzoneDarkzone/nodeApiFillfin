@@ -172,29 +172,29 @@ export class UserController {
                 at: new Date().getTime()
             }, `${Config.secretKey}`, { expiresIn: '10m' })
             /* generate refresh_token when register and no expire */
-            const refresh_token = jwt.sign({
-                username: finding.username,
-                gender: finding.gender,
-                section: 'admin',
-                at: new Date().getTime(),
-                token: access_token
-            }, `${Config.secretKey}`)
+            // const refresh_token = jwt.sign({
+            //     username: finding.username,
+            //     gender: finding.gender,
+            //     section: 'admin',
+            //     at: new Date().getTime(),
+            //     token: access_token
+            // }, `${Config.secretKey}`)
             /** update access_token and refresh_token */
             finding.access_token = access_token
-            finding.refresh_token = refresh_token
+            finding.refresh_token = finding.refresh_token
             finding.save()
             // const ip = req.ip.split(':')[3]
             const userAgent = req.headers['user-agent']
             const logging = await Log.create({
                 user_code: finding.users_code,
-                refresh_token: refresh_token,
+                refresh_token: finding.refresh_token,
                 details: userAgent,
                 ip_address: req.ip,
                 section: 'admin',
                 status: 'active',
             }) 
             const tokenLogging = await TokenLog.create({
-                refresh_token: refresh_token,
+                refresh_token: finding.refresh_token,
                 reset_token: '',
                 section: 'admin',
                 active: true,
@@ -204,7 +204,7 @@ export class UserController {
                 message: 'ok',
                 description: 'password has checked.',
                 access_token: access_token,
-                refresh_token: refresh_token,
+                refresh_token: finding.refresh_token,
                 profileImg: finding.profile_img,
                 adminName: finding.display_name
             })

@@ -113,6 +113,10 @@ export const ViewProduct = sequelize.define('view_product',
         type: DataTypes.INTEGER,
         allowNull: false
     },
+    priority_recommend: {
+        type: DataTypes.INTEGER,
+        allowNull: false
+    },
 },
 {
     sequelize,

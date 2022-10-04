@@ -1,3 +1,4 @@
+import { AdminManageController } from './../controllers/AdminManageController';
 import { CartController } from './../controllers/CartController';
 import { BankController } from './../controllers/BankController';
 import { ProductController } from './../controllers/ProductController';
@@ -19,6 +20,7 @@ const productController = new ProductController()
 const bankController = new BankController()
 const cartController = new CartController()
 const chatController = new ChatController()
+const settingController = new AdminManageController()
 
 /** for authenticate */
 router.post('/api/member/signin',[check('username').notEmpty().isString(), check('password').notEmpty().isString(),], membersController.OnSignin)
@@ -86,5 +88,8 @@ router.post('/api/member/chatToAdmin', [
 ], AuthenticateMember, chatController.OnSendMessageToAdmin)
 router.get('/api/member/getOldChat', AuthenticateMember, chatController.OnGetOldChatMember)
 router.get('/api/member/readChat', AuthenticateMember, chatController.OnReadMessageMember)
+
+/** for settings */
+router.get('/api/website/getLine/:section', settingController.OnGetLineQR)
 
 export const memberRouter = router

@@ -38,7 +38,6 @@ export class ProductController extends ViewService {
                 sex: gender, 
                 storeStatus: 'active',
                 store_name:{[Op.substring]:store_name},
-                [Op.or]: [{ pre_order: 'no'}, { pre_order: status_standard?"no":"yes"}, { pre_order: null }]
             },
             attributes: ['store_name', 'store_profile', 'store_concept', 'store_code', 'storeStatus', 'id', 'product_code', 'name_member', 'content_member',
                         'name_premium', 'content_premium', 'price_standard', 'price_premium', 'recommend', 'pre_order', 'status', 'sex', 'clip', 

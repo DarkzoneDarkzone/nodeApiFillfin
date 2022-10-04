@@ -18,13 +18,13 @@ export class ViewService extends DBconnect {
     query_product_recommend = async (package_id: any, sex: any) => {
         sql = ` SELECT view_product.*, GROUP_CONCAT(view_product.path_img) as product_img
                 FROM view_product WHERE package_id = ? AND sex = ? AND recommend = "yes"
-                GROUP BY view_product.store_id, view_product.id ORDER BY RAND()`
+                GROUP BY view_product.store_id, view_product.id ORDER BY view_product.priority_recommend`
         return this.findAll(sql, [package_id, sex])
     }
     query_product_preorder = async (package_id: any, sex: any, store_id: any) => {
         sql = ` SELECT view_product.*, GROUP_CONCAT(view_product.path_img) as product_img
                 FROM view_product WHERE package_id = ? AND sex = ? AND store_id = ? AND pre_order = "yes"
-                GROUP BY view_product.store_id, view_product.id ORDER BY RAND()`
+                GROUP BY view_product.store_id, view_product.id ORDER BY view_product.priority`
         return this.findAll(sql, [package_id, sex, store_id])
     }
     query_store_post = async (store_id: any) => {
@@ -78,7 +78,9 @@ export class ViewService extends DBconnect {
                         GROUP_CONCAT(price) as price,
                         GROUP_CONCAT(product_status) as product_status,
                         GROUP_CONCAT(store_id) as store_id,
-                        GROUP_CONCAT(product_image) as product_image
+                        GROUP_CONCAT(product_image) as product_image,
+                        GROUP_CONCAT(store_code) as store_code,
+                        GROUP_CONCAT(store_name) as store_name
                     FROM 
                         (SELECT orders.*,
                             orders_address.name, 
@@ -95,22 +97,32 @@ export class ViewService extends DBconnect {
                             ord_product.price, 
                             ord_product.store_id,
                             ord_product.status as product_status,
-                            ord_product.path_img as product_image
+                            ord_product.path_img as product_image,
+                            ord_product.store_code,
+                            ord_product.store_name
                         FROM orders 
                         JOIN orders_address ON (orders.order_number = orders_address.order_number)
                         JOIN 
                             (SELECT orders_product.*, 
                                 product.store_id,
-                                product.path_img
+                                product.path_img,
+                                product.store_code,
+                                product.name as store_name
                             FROM orders_product 
-                            LEFT JOIN (SELECT product.*, 
-                                    product_image.path_img
-                            FROM product JOIN product_image ON (product.id = product_image.product_id) 
-                            GROUP BY product.id) as product 
-                        ON (orders_product.product_id = product.id)
-                        ) as ord_product 
+                            LEFT JOIN (
+                                SELECT product.*, 
+                                    product_image.path_img,
+                                    store.store_code,
+                                    store.name
+                                FROM product 
+                                JOIN store ON (product.store_id = store.id)
+                                JOIN product_image ON (product.id = product_image.product_id) 
+                                GROUP BY product.id) as product 
+                            ON (orders_product.product_id = product.id)
+                            ) as ord_product 
                         ON (orders.order_number = ord_product.order_number)
-                    ) as ord GROUP BY ord.order_number
+                    ) as ord 
+                    GROUP BY ord.order_number
                 ) as mem_ord WHERE mem_ord.member_id = ? ORDER BY mem_ord.createdAt DESC`
         return this.findAll(sql, [member_id])
     }

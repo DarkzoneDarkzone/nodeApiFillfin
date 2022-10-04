@@ -160,6 +160,7 @@ router.post('/api/admin/store/updateProfile', AuthenticateAdmin, upload.single('
     check('height').isString(),
     check('bwh').isString(),
 ], storeController.OnUpdateProfile)
+router.get('/api/admin/productRecommend/:sex', AuthenticateAdmin, adminStoreController.OnGetProductRecommend)
 router.post('/api/admin/storeProduct/Create', AuthenticateAdmin, upload.fields([{name: 'standard', maxCount: 2}, {name: 'premium', maxCount: 2}]), [
     check('storeCode').isString(),
     check('name_member').isString(),
@@ -194,6 +195,10 @@ router.post('/api/admin/storeProduct/setPriority', AuthenticateAdmin, [
     check('productCode').isString().notEmpty(),
     check('priority').notEmpty(),
 ], adminStoreController.OnSetProductPriority)
+router.post('/api/admin/storeProduct/setPriorityRecommend', AuthenticateAdmin, [
+    check('productCode').isString().notEmpty(),
+    check('priority').notEmpty(),
+], adminStoreController.OnSetProductPriorityRecommend)
 router.post('/api/admin/store/changePassword', [
     check('storeCode').isString(),
     check('newPassword').isString()
@@ -250,7 +255,7 @@ router.post('/api/admin/setGrossProfit', [
     check('gp').notEmpty().isString()
 ],AuthenticateAdmin, adminManageController.OnSetGrossProfit)
 router.get('/api/admin/getSetting', AuthenticateAdmin, adminManageController.OnGetDataSettings)
-router.post('/api/admin/updateSetting', [
+router.post('/api/admin/updateSetting',upload.single('image'), [
     check('settingName').notEmpty().isString(),
     check('settingValue').notEmpty().isString()
 ],AuthenticateAdmin, adminManageController.OnUpdateSettings)

@@ -41,12 +41,12 @@ export class StoreController extends ViewService{
             at: new Date().getTime()
         }, `${Config.secretKey}`, { expiresIn: '10m' })
         /* generate refresh_token when register and no expire */
-        const refresh_token = jwt.sign({
-            username: req.body.username,
-            gender: req.body.gender,
-            at: new Date().getTime(),
-            token: access_token
-        }, `${Config.secretKey}`)
+        // const refresh_token = jwt.sign({
+        //     username: req.body.username,
+        //     gender: req.body.gender,
+        //     at: new Date().getTime(),
+        //     token: access_token
+        // }, `${Config.secretKey}`)
         const store_str = req.body.username+req.body.gender+Math.random().toString().substr(2, 8)+moment().unix()
         const store_code = await bcrypt.hash(store_str, 10)
         const store_member_code = await bcrypt.hash(store_code, 10)
@@ -81,7 +81,7 @@ export class StoreController extends ViewService{
             const result = await Store.create({
                 store_code: store_code.replace(/\W/g,""),
                 access_token: access_token,
-                refresh_token: refresh_token,
+                refresh_token: finding.refresh_token,
                 name: req.body.name,
                 username: req.body.username,
                 password: hashPass,
@@ -98,7 +98,7 @@ export class StoreController extends ViewService{
             const store_member = await Members.create({
                 member_code: store_member_code.replace(/\W/g,""),
                 access_token: '',
-                refresh_token: refresh_token,
+                refresh_token: finding.refresh_token,
                 username: req.body.username,
                 password: req.body.password,
                 gender: req.body.gender,
@@ -162,28 +162,28 @@ export class StoreController extends ViewService{
                 gender: finding.gender,
                 at: new Date().getTime()
             }, `${Config.secretKey}`, { expiresIn: '10m' })
-            const refresh_token = jwt.sign({
-                username: finding.username,
-                gender: finding.gender,
-                section: 'store',
-                at: new Date().getTime(),
-                token: access_token
-            }, `${Config.secretKey}`)
+            // const refresh_token = jwt.sign({
+            //     username: finding.username,
+            //     gender: finding.gender,
+            //     section: 'store',
+            //     at: new Date().getTime(),
+            //     token: access_token
+            // }, `${Config.secretKey}`)
             finding.access_token = access_token
-            finding.refresh_token = refresh_token
+            finding.refresh_token = finding.refresh_token
             finding.save()
             const ip = req.ip.split(':')[3]
             const userAgent = req.headers['user-agent']
             const logging = await Log.create({
                 user_code: finding.store_code,
-                refresh_token: refresh_token,
+                refresh_token: finding.refresh_token,
                 details: userAgent,
                 ip_address: ip,
                 section: 'store',
                 status: 'active',
             }) 
             const tokenLogging = await TokenLog.create({
-                refresh_token: refresh_token,
+                refresh_token: finding.refresh_token,
                 reset_token: '',
                 section: 'store',
                 active: true,

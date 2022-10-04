@@ -173,6 +173,8 @@ export class OrderController extends ViewService{
                 let product_status = data.product_status.split(',')
                 let store_id = data.store_id.split(',')
                 let product_image = data.product_image.split(',')
+                let store_code = data.store_code.split(',')
+                let store_name = data.store_name.split(',')
                 for (let i = 0; i < product_id.length; i++) {
                     const dd = {
                         product_id: product_id[i],
@@ -182,6 +184,8 @@ export class OrderController extends ViewService{
                         product_status: product_status[i],
                         store_id: store_id[i],
                         product_image: product_image[i],
+                        store_code: store_code[i],
+                        store_name: store_name[i],
                     }
                     arr_product.push(dd)
                 }
@@ -404,7 +408,7 @@ export class OrderController extends ViewService{
             })
         }
         try {
-            finding.payment_status = req.body.status
+            finding.status_confirm = req.body.status
             finding.save()
             return res.status(200).json({
                 status: true,
