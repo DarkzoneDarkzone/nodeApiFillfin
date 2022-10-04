@@ -198,6 +198,7 @@ router.post('/api/admin/storeProduct/setPriority', AuthenticateAdmin, [
 router.post('/api/admin/storeProduct/setPriorityRecommend', AuthenticateAdmin, [
     check('productCode').isString().notEmpty(),
     check('priority').notEmpty(),
+    check('sex').isString(),
 ], adminStoreController.OnSetProductPriorityRecommend)
 router.post('/api/admin/store/changePassword', [
     check('storeCode').isString(),

@@ -4,7 +4,11 @@ import { validationResult } from 'express-validator'
 
 export class ReviewController {
     OnGetReview = async(req: any, res: any) => {
-        const finding = await Review.findAll()
+        const finding = await Review.findAll({
+            order: [
+                ['createdAt', 'DESC']
+            ]
+        })
         return res.status(200).json({
             status: true,
             message: 'ok',

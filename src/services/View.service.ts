@@ -182,7 +182,8 @@ export class ViewService extends DBconnect {
                         GROUP_CONCAT(pre_order) as preOrder,
                         GROUP_CONCAT(price) as price,
                         GROUP_CONCAT(product_status) as product_status,
-                        GROUP_CONCAT(product_image) as product_image
+                        GROUP_CONCAT(product_image) as product_image,
+                        GROUP_CONCAT(gross_profit) as gross_profit
                     FROM
                     (SELECT orders.*,
                         orders_address.name, 
@@ -203,6 +204,7 @@ export class ViewService extends DBconnect {
                         orders_payment.slip,
                         ord_product.recommend,
                         ord_product.pre_order,
+                    ord_product.gross_profit,
                         members.username
                     FROM orders 
                         JOIN orders_address ON (orders.order_number = orders_address.order_number)
@@ -222,7 +224,7 @@ export class ViewService extends DBconnect {
                         ON (orders.order_number = ord_product.order_number)
                         JOIN orders_payment ON (orders_payment.order_number = orders.order_number)
                         JOIN members ON (orders.member_id = members.id)
-                ) as ord GROUP BY ord.order_number) as store_order ORDER BY store_order.isRead ASC, store_order.createdAt DESC`
+                ) as ord GROUP BY ord.order_number) as store_order ORDER BY store_order.isRead ASC, store_order.createdAt DESC;`
         return this.findAll(sql, [])
     }
     query_order_one = async(order_number: any, product_id: any) => {

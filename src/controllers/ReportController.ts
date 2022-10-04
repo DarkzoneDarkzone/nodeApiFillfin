@@ -304,8 +304,8 @@ export class ReportController extends ReportService {
                 }
             }})
         const newMember: any = await this.queryNewMember()
-        const newOrder = await Orders.findAll({where: {status: 'pending', payment_status: 'pending'}})
-        const newChat = await ChatTemp.findAll({where:{isRead: 0}})
+        const newOrder = await Orders.findAll({where: {status: 'pending'}})
+        const newChat = await ChatTemp.findAll({where:{isRead: 0, from: 'member'}})
         const dashboardTop = {
             newStore: newStore.length,
             newMember: newMember.length,

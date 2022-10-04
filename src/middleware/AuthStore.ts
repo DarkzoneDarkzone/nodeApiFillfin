@@ -34,6 +34,7 @@ export const AuthenticateStore = async (req: any, res: any, next: any) => {
             }
             /* data keep for use when update data in database */
             req.authStore = decodedToken;
+            console.log(decodedToken)
             next()
         } catch(error) {
             return res.status(401).json({ 

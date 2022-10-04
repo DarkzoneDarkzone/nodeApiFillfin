@@ -7,6 +7,7 @@ FROM (
               store.concept as store_concept, 
               store.store_code,
               store.status as storeStatus,
+              store.updatedAt as lastUpdate,
               products.id,
               products.product_code,
               products.name_member,
@@ -52,4 +53,4 @@ FROM (
        ) as products
        ON (store.id = products.store_id)
        ORDER BY products.pre_order ASC
-) as all_store
+) as all_store WHERE all_store.storeStatus = "active" ORDER BY all_store.lastUpdate DESC, all_store.updatedAt DESC;

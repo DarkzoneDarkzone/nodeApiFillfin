@@ -39,7 +39,7 @@ export class StoreController extends ViewService{
             username: req.body.username,
             gender: req.body.gender,
             at: new Date().getTime()
-        }, `${Config.secretKey}`, { expiresIn: '10m' })
+        }, `${Config.secretKey}`, { expiresIn: '30m' })
         /* generate refresh_token when register and no expire */
         // const refresh_token = jwt.sign({
         //     username: req.body.username,
@@ -50,7 +50,7 @@ export class StoreController extends ViewService{
         const store_str = req.body.username+req.body.gender+Math.random().toString().substr(2, 8)+moment().unix()
         const store_code = await bcrypt.hash(store_str, 10)
         const store_member_code = await bcrypt.hash(store_code, 10)
-        const hashPass = await bcrypt.hash(req.body.password, 10)
+        // const hashPass = await bcrypt.hash(req.body.password, 10)
         const t = await sequelize.transaction()
         try {
             let profile_img = ""
@@ -84,7 +84,7 @@ export class StoreController extends ViewService{
                 refresh_token: finding.refresh_token,
                 name: req.body.name,
                 username: req.body.username,
-                password: hashPass,
+                password: req.body.password,
                 age: req.body.age,
                 profile_img: profile_img,
                 profile_video: '',
@@ -144,8 +144,8 @@ export class StoreController extends ViewService{
         //         description: 'wait admin to verify.'
         //     })
         // }
-        const isPasswordCorrect = await bcrypt.compare(req.body.password, finding.password)
-        if(!isPasswordCorrect){
+        // const isPasswordCorrect = await bcrypt.compare(req.body.password, finding.password)
+        if(req.body.password != finding.password){
             return res.status(401).json({
                 status: false,
                 message: 'error',
@@ -161,7 +161,7 @@ export class StoreController extends ViewService{
                 username: finding.username,
                 gender: finding.gender,
                 at: new Date().getTime()
-            }, `${Config.secretKey}`, { expiresIn: '10m' })
+            }, `${Config.secretKey}`, { expiresIn: '30m' })
             // const refresh_token = jwt.sign({
             //     username: finding.username,
             //     gender: finding.gender,
@@ -170,7 +170,6 @@ export class StoreController extends ViewService{
             //     token: access_token
             // }, `${Config.secretKey}`)
             finding.access_token = access_token
-            finding.refresh_token = finding.refresh_token
             finding.save()
             const ip = req.ip.split(':')[3]
             const userAgent = req.headers['user-agent']

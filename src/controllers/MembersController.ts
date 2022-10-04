@@ -136,7 +136,7 @@ export class MembersController extends ViewService {
             username: req.body.username,
             gender: req.body.gender,
             at: new Date().getTime()
-        }, `${Config.secretKey}`, { expiresIn: '10m' })
+        }, `${Config.secretKey}`, { expiresIn: '30m' })
         /* generate refresh_token when register and no expire */
         // const refresh_token = jwt.sign({
         //     username: req.body.username,

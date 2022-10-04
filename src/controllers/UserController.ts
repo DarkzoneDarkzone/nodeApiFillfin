@@ -170,7 +170,7 @@ export class UserController {
                 username: req.body.username,
                 psermission: finding.permission,
                 at: new Date().getTime()
-            }, `${Config.secretKey}`, { expiresIn: '10m' })
+            }, `${Config.secretKey}`, { expiresIn: '30m' })
             /* generate refresh_token when register and no expire */
             // const refresh_token = jwt.sign({
             //     username: finding.username,
@@ -181,7 +181,6 @@ export class UserController {
             // }, `${Config.secretKey}`)
             /** update access_token and refresh_token */
             finding.access_token = access_token
-            finding.refresh_token = finding.refresh_token
             finding.save()
             // const ip = req.ip.split(':')[3]
             const userAgent = req.headers['user-agent']
@@ -324,7 +323,7 @@ export class UserController {
             })
         }
         const token = await TokenLog.findOne({where:{refresh_token: finding.refresh_token}})
-        if(!token.active){
+        if(!token){
             return res.status(400).json({
                 status: false,
                 message: 'error',
@@ -339,7 +338,7 @@ export class UserController {
                 usercode: finding.users_code,
                 username: finding.username,
                 at: new Date().getTime()
-            }, `${Config.secretKey}`, {expiresIn: '10m'})
+            }, `${Config.secretKey}`, {expiresIn: '30m'})
             finding.access_token = access_token
             finding.save()
             return res.status(200).json({

@@ -478,7 +478,7 @@ export class AdminStoreController extends ViewService {
                 },{
                     where: {
                         store_id: product.store_id,
-                        // pre_order: product.pre_order,
+                        pre_order: product.pre_order,
                         priority: { [Op.gte]: req.body.priority},
                         status: 'active'
                     }
@@ -501,7 +501,7 @@ export class AdminStoreController extends ViewService {
 
     /*** for product recommend */
     OnSetProductPriorityRecommend = async(req: any, res: any) => {
-        const errors = validationResult(req.body)
+        const errors = validationResult(req)
         if(!errors.isEmpty()){
             return res.status(400).json({
                 status: false,
@@ -509,20 +509,19 @@ export class AdminStoreController extends ViewService {
                 errorMessage: errors.array()
             })
         }
-        const product = await Product.findOne({where:{product_code: req.body.productCode}})
         try {
             const updateAds = await Product.update(
                 {
-                    priority: sequelize.literal('priority_recommend + 1'),
+                    priority_recommend: sequelize.literal('priority_recommend + 1'),
                 },{
                     where: {
-                        // pre_order: product.pre_order,
                         sex: req.body.sex,
-                        priority: { [Op.gte]: req.body.priority_recommend},
+                        priority_recommend: { [Op.gte]: parseInt(req.body.priority)},
                         status: 'active'
                     }
                 })
-            product.priority_recommend = req.body.priority_recommend
+            const product = await Product.findOne({where:{product_code: req.body.productCode}})
+            product.priority_recommend = parseInt(req.body.priority)
             product.save()
             return res.status(200).json({
                 status: true,
@@ -530,6 +529,7 @@ export class AdminStoreController extends ViewService {
                 description: 'product was updated.'
             })
         } catch(error){
+            console.log(error)
             return res.status(500).json({
                 status: false,
                 message: 'error',
@@ -547,7 +547,7 @@ export class AdminStoreController extends ViewService {
             })
         }
         try {
-            const product = await Product.findOne({
+            const product = await Product.findAll({
                 where:{
                     recommend: 'yes', 
                     status: 'active',

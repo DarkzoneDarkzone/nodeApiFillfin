@@ -79,6 +79,7 @@ export class OrderController extends ViewService{
                 description: 'not found product in cart.',
             })
         }
+
         try {
             let slip = ''
             if(req.file){
@@ -281,6 +282,7 @@ export class OrderController extends ViewService{
                 let product_image = data.product_image.split(',')
                 let recommend = data.recommend.split(',')
                 let preOrder = data.preOrder.split(',')
+                let grossProfit = data.gross_profit.split(',')
                 for (let i = 0; i < product_id.length; i++) {
                     const dd = {
                         product_id: product_id[i],
@@ -290,7 +292,8 @@ export class OrderController extends ViewService{
                         product_status: product_status[i],
                         product_image: product_image[i],
                         recommend: recommend[i],
-                        preOrder: preOrder[i]
+                        preOrder: preOrder[i],
+                        grossProfit: grossProfit[i],
                     }
                     arr_product.push(dd)
                 }
@@ -440,6 +443,12 @@ export class OrderController extends ViewService{
                     message: 'error',
                     description: 'order was not found.'
                 })
+            }
+            const prodInOrder = await OrdersProduct.findAll({where:{order_number: req.body.orderNumber}})
+            if(req.body.status == "failed"){
+                for await (const data of prodInOrder) {
+                    const update_product = await Product.update({status: 'active'},{where:{id: data.id}})
+                }
             }
             finding.status = req.body.status
             finding.message = req.body.message
