@@ -103,7 +103,7 @@ export class ReportService extends DBconnect {
                 JOIN orders_address 
                 ON (orders.order_number = orders_address.order_number)
                 JOIN orders_payment 
-                ON (orders.order_number = orders_payment.order_number AND orders_payment.status_confirm = "confirm")
+                ON (orders.order_number = orders_payment.order_number AND orders.payment_status = "confirm")
                 WHERE (orders.createdAt > ? AND orders.createdAt < ?)`
         return this.findAll(sql, [start, end])
     }
