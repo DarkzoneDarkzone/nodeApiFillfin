@@ -138,12 +138,12 @@ export class MembersController extends ViewService {
             at: new Date().getTime()
         }, `${Config.secretKey}`, { expiresIn: '30m' })
         /* generate refresh_token when register and no expire */
-        // const refresh_token = jwt.sign({
-        //     username: req.body.username,
-        //     gender: req.body.gender,
-        //     at: new Date().getTime(),
-        //     token: access_token
-        // }, `${Config.secretKey}`)
+        const refresh_token = jwt.sign({
+            username: req.body.username,
+            gender: req.body.gender,
+            at: new Date().getTime(),
+            token: access_token
+        }, `${Config.secretKey}`)
         /** generate member_code */
         const str_member_code = `${req.body.username}.${req.body.password}${moment().format('YYYYMMDDHHmmss')}`
         let member_code = await bcrypt.hash(str_member_code, 10)
@@ -153,7 +153,7 @@ export class MembersController extends ViewService {
             const user = await Members.create({
                 member_code: member_code.replace(/\W/g,""),
                 access_token: access_token,
-                refresh_token: finding.refresh_token,
+                refresh_token: refresh_token,
                 username: req.body.username,
                 gender: req.body.gender,
                 password: req.body.password,

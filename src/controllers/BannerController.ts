@@ -22,7 +22,9 @@ export class BannerController {
         const filtered = {
             title: finding.title,
             content: finding.content,
-            image: finding.img_path
+            image: finding.img_path,
+            h1: finding.h1,
+            h2: finding.h2,
         }
         return res.status(200).json({
             status: true,
@@ -75,6 +77,8 @@ export class BannerController {
             finding.title = req.body.title
             finding.content = req.body.content
             finding.display = req.body.display
+            finding.h1 = req.body.h1
+            finding.h2 = req.body.h2
             finding.save()
             return res.status(200).json({
                 status: true,

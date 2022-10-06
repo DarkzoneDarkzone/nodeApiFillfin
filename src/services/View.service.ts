@@ -174,7 +174,7 @@ export class ViewService extends DBconnect {
     query_admin_order = async() => {
         sql = `SELECT * FROM 
                     (SELECT order_number, payment_status, status, totalprice, netprice, member_id, createdAt,
-                        updatedAt, name, address, phone, district, subdistrict, province, code, note, store_id, slip, isRead, username,
+                        updatedAt, name, address, phone, district, subdistrict, province, code, note, message, store_id, slip, isRead, username,
                         GROUP_CONCAT(product_id) as product_id,
                         GROUP_CONCAT(product_name) as product_name,
                         GROUP_CONCAT(product_content) as product_content,

@@ -314,6 +314,7 @@ export class OrderController extends ViewService{
                 province: data.province,
                 code: data.code,
                 note: data.note,
+                message: data.message,
                 slip: data.slip,
                 isRead: data.isRead?true:false,
                 username: data.username,
@@ -411,7 +412,7 @@ export class OrderController extends ViewService{
             })
         }
         try {
-            finding.status_confirm = req.body.status
+            finding.payment_status = req.body.status
             finding.save()
             return res.status(200).json({
                 status: true,
@@ -523,12 +524,16 @@ export class OrderController extends ViewService{
             let netPrice: number = 0
             productAllInOrder.forEach((data: any) => {
                 totalPrice += data.price
-                netPrice += data.price * (1 - data.gross_profit / 100)
+                if(data.product_id == req.body.productId){
+                    netPrice += data.price * (1 - parseInt(req.body.gp) / 100)
+                } else {
+                    netPrice += data.price * (1 - data.gross_profit / 100)
+                }
             });
             productForSet.gross_profit = parseInt(req.body.gp)
             productForSet.save()
-            orders.totalprice = totalPrice
-            orders.netprice = netPrice
+            orders.totalprice = Math.round(totalPrice)
+            orders.netprice = Math.round(netPrice)
             orders.save()
             return res.status(200).json({
                 status: true,
@@ -559,5 +564,49 @@ export class OrderController extends ViewService{
             message: 'ok',
             description: 'order was readed.'
         })
+    }
+    OnCancelProductInOrder = async(req: any, res: any) => {
+        const errors = validationResult(req)
+        if(!errors.isEmpty()){
+            return res.status(400).json({
+                status: false,
+                message: 'error',
+                errorMessage: errors.array()
+            })
+        }
+        const productForSet = await OrdersProduct.findOne({where: {order_number: req.body.orderNumber, product_id: req.body.productId}})
+        const productAllInOrder: any = await OrdersProduct.findAll({where: {order_number: req.body.orderNumber, status: {[Op.ne] : "canceled"}, product_id: {[Op.ne] : req.body.productId}}})
+        const orders = await Orders.findOne({where:{order_number: req.body.orderNumber}})
+        if(!productForSet || !orders){
+            return res.status(404).json({
+                status: false,
+                message: 'error',
+                description: 'order was not found.'
+            })
+        }
+        try {
+            let totalPrice: number = 0
+            let netPrice: number = 0
+            productAllInOrder.forEach((data: any) => {
+                totalPrice += data.price
+                netPrice += data.price * (1 - data.gross_profit / 100)
+            });
+            productForSet.status = "canceled"
+            orders.totalprice = Math.round(totalPrice)
+            orders.netprice = Math.round(netPrice)
+            productForSet.save()
+            orders.save()
+            return res.status(200).json({
+                status: true,
+                message: 'ok',
+                description: 'order product was canceled.'
+            })
+        } catch(error){
+            return res.status(500).json({
+                status: false,
+                message: 'error',
+                description: 'something went wrong.'
+            })
+        }
     }
 }

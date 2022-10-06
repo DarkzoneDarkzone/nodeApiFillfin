@@ -41,12 +41,12 @@ export class StoreController extends ViewService{
             at: new Date().getTime()
         }, `${Config.secretKey}`, { expiresIn: '30m' })
         /* generate refresh_token when register and no expire */
-        // const refresh_token = jwt.sign({
-        //     username: req.body.username,
-        //     gender: req.body.gender,
-        //     at: new Date().getTime(),
-        //     token: access_token
-        // }, `${Config.secretKey}`)
+        const refresh_token = jwt.sign({
+            username: req.body.username,
+            gender: req.body.gender,
+            at: new Date().getTime(),
+            token: access_token
+        }, `${Config.secretKey}`)
         const store_str = req.body.username+req.body.gender+Math.random().toString().substr(2, 8)+moment().unix()
         const store_code = await bcrypt.hash(store_str, 10)
         const store_member_code = await bcrypt.hash(store_code, 10)
@@ -81,7 +81,7 @@ export class StoreController extends ViewService{
             const result = await Store.create({
                 store_code: store_code.replace(/\W/g,""),
                 access_token: access_token,
-                refresh_token: finding.refresh_token,
+                refresh_token: refresh_token,
                 name: req.body.name,
                 username: req.body.username,
                 password: req.body.password,
@@ -98,7 +98,7 @@ export class StoreController extends ViewService{
             const store_member = await Members.create({
                 member_code: store_member_code.replace(/\W/g,""),
                 access_token: '',
-                refresh_token: finding.refresh_token,
+                refresh_token: refresh_token,
                 username: req.body.username,
                 password: req.body.password,
                 gender: req.body.gender,

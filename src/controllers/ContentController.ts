@@ -277,8 +277,8 @@ export class ContentController extends ViewService {
             banner.position = req.body.position
             banner.title = req.body.title
             banner.content = req.body.content
-            // banner.h1 = req.body.h1
-            // banner.h2 = req.body.h2
+            banner.h1 = req.body.h1
+            banner.h2 = req.body.h2
             banner.save()
             return res.status(201).json({
                 sttaus: true,

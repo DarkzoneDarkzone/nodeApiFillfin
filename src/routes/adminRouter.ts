@@ -226,6 +226,10 @@ router.post('/api/admin/orders/updateGpProduct', [
     check('productId').isNumeric(),
     check('gp').isNumeric(),
 ], AuthenticateAdmin, orderController.OnUpdateGPInOrder)
+router.post('/api/admin/orders/cancelProductInOrder', [
+    check('orderNumber').isString(),
+    check('productId').isNumeric(),
+], AuthenticateAdmin, orderController.OnCancelProductInOrder)
 /** for report */
 router.post('/api/admin/storeReport/export', AuthenticateAdmin, [
     check('start'),
@@ -288,6 +292,8 @@ router.post('/api/admin/updateBanner', upload.single('image'), [
     check('title').isString(),
     check('display').isString(),
     check('content').isString(),
+    check('h1').isString(),
+    check('h2').isString(),
     check('id').isNumeric(),
 ], AuthenticateAdmin, bannerController.OnUpdateBanner)
 router.post('/api/admin/changeDisplayBanner', [
